@@ -30,17 +30,25 @@ Detailnya ada di [docs/06-roadmap.md](docs/06-roadmap.md).
 
 ## Menjalankan di lokal
 
-> Bagian ini berlaku setelah kode mulai ditulis. Stack lengkapnya ada di [docs/05-teknis.md](docs/05-teknis.md).
+Stack lengkapnya ada di [docs/05-teknis.md](docs/05-teknis.md).
 
 Prasyarat: Node.js versi LTS terbaru dan npm.
 
 ```bash
 npm install
-npm run dev              # server lokal
-npm run test             # unit test (matching, scoring, tanggal)
+cp .env.example .env     # isi VITE_LAUNCH_DATE dan VITE_PAYLOAD_KEY
+npm run dev:fixture      # main di lokal dengan 7 soal palsu dari tests/fixtures/
+npm run dev              # server lokal dengan jadwal asli (butuh soal verified)
+npm run test             # unit test (matching, scoring, tanggal, reducer, konten)
+npm run test:e2e         # Playwright (sekali saja: npx playwright install chromium)
+npm run lint             # ESLint + Prettier
+npm run typecheck        # tsc
 npm run validate:content # cek semua file soal sesuai skema
-npm run build            # build produksi ke dist/
+npm run plan:schedule -- 2026-12          # usulan jadwal sebulan dari soal verified
+npm run build            # build-daily + build produksi ke dist/
 ```
+
+`npm run dev:fixture` menulis payload palsu ke `public/daily/` (folder hasil generate, tidak di-commit). Jangan deploy hasilnya; `npm run build` selalu membersihkan folder itu dulu.
 
 ---
 

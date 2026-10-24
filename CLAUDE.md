@@ -24,6 +24,7 @@ Jangan menambah dependensi baru tanpa alasan kuat. Ukuran bundle adalah fitur (t
 
 ```bash
 npm run dev               # server lokal
+npm run dev:fixture       # server lokal dengan payload palsu dari tests/fixtures/
 npm run test              # Vitest
 npm run test:e2e          # Playwright
 npm run lint              # ESLint + Prettier check

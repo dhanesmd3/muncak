@@ -33,8 +33,7 @@ muncak/
 │   └── rarity.json              # hasil hitung kelangkaan (fase 2, digenerate)
 ├── public/
 │   ├── fonts/                   # woff2, di-host sendiri
-│   ├── sprites/                 # spritesheet PNG + JSON
-│   ├── sfx/
+│   ├── icons/                   # ikon PWA (digenerate scripts/generate-icons.ts)
 │   └── assets/CREDITS.md
 ├── src/
 │   ├── main.tsx
@@ -49,7 +48,8 @@ muncak/
 │   │   ├── date.ts              # tanggal WIB, nomor hari, hitung mundur
 │   │   ├── daily.ts             # memuat soal harian
 │   │   └── reducer.ts           # state machine ronde
-│   ├── scene/                   # canvas: parallax, sprite, kamera
+│   ├── scene/                   # canvas: parallax, sprite (string pixel art di sprites.ts), kamera
+│   ├── audio/                   # SFX chiptune, disintesis WebAudio (tanpa file audio)
 │   ├── storage/                 # localStorage + migrasi versi
 │   ├── share/                   # teks share, Web Share API, WA fallback
 │   ├── api/                     # klien backend (fase 2)
@@ -59,6 +59,7 @@ muncak/
 │   ├── validate-content.ts
 │   ├── build-daily.ts           # content → public/daily/*.json
 │   ├── plan-schedule.ts         # bantu susun jadwal bulanan
+│   ├── generate-icons.ts        # ikon PWA, favicon, gambar Open Graph dari pixel art
 │   └── compute-rarity.ts        # fase 2
 ├── worker/                      # Cloudflare Worker (fase 2)
 │   ├── src/index.ts
@@ -121,6 +122,7 @@ export interface DailyPayload {
 export interface Mountain {
   id: string;
   name: string;       // "Gunung Semeru"
+  shortName: string;  // "Semeru", dipakai di teks share
   altitude: number;   // mdpl
   province: string;
   fact: string;       // ≤ 140 karakter
@@ -514,5 +516,9 @@ Kasus uji tanggal yang wajib ada: 23:59:59 WIB vs 00:00:00 WIB, perangkat dengan
 | `VITE_PAYLOAD_KEY` | Frontend | kunci obfuscation ringan |
 | `DEVICE_SECRET` | Worker secret | string acak 32 byte |
 | `CLOUDFLARE_API_TOKEN` | GitHub Actions secret | untuk deploy |
+| `CLOUDFLARE_ACCOUNT_ID` | GitHub Actions secret | untuk deploy |
+| `CLOUDFLARE_PAGES_PROJECT` | GitHub Actions variable | nama proyek Cloudflare Pages |
+
+`VITE_LAUNCH_DATE` di GitHub Actions disimpan sebagai *variable*, `VITE_PAYLOAD_KEY` sebagai *secret*.
 
 Jangan pernah commit secret. Simpan contoh nilainya di `.env.example`.

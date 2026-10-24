@@ -1,0 +1,28 @@
+{
+  "id": "kuliner-sambal-001",
+  "prompt": "Sebutkan jenis sambal",
+  "category": "kuliner",
+  "difficulty": 2,
+  "closedSet": false,
+  "optionalPrefixes": ["sambal", "sambel"],
+  "answers": [
+    { "id": "terasi", "text": "Sambal Terasi", "aliases": ["terasi"], "tier": "basecamp" },
+    { "id": "matah", "text": "Sambal Matah", "aliases": ["matah"], "tier": "basecamp" },
+    { "id": "bawang", "text": "Sambal Bawang", "aliases": [], "tier": "basecamp" },
+    { "id": "ijo", "text": "Sambal Ijo", "aliases": ["sambal hijau", "lado mudo", "sambal lado mudo"], "tier": "camp" },
+    { "id": "dabu", "text": "Sambal Dabu-dabu", "aliases": ["dabu dabu", "dabudabu"], "tier": "camp" },
+    { "id": "roa", "text": "Sambal Roa", "aliases": [], "tier": "treeline" },
+    { "id": "tempoyak", "text": "Sambal Tempoyak", "aliases": [], "tier": "treeline" },
+    { "id": "andaliman", "text": "Sambal Andaliman", "aliases": [], "tier": "summit" },
+    { "id": "colo", "text": "Sambal Colo-colo", "aliases": ["colo colo"], "tier": "summit" },
+    { "id": "luat", "text": "Sambal Luat", "aliases": ["se'i luat", "luat"], "tier": "edelweiss" }
+  ],
+  "rejected": [
+    { "text": "Saus Tomat", "aliases": ["saos tomat"], "reason": "Saus tomat bukan sambal, sabar ya 😄" }
+  ],
+  "edelweissFact": "Sambal Luat berasal dari Timor, NTT. Dibuat dari cabai, jeruk nipis, dan daun kemangi, cocok dengan se'i.",
+  "sources": ["[ISI]"],
+  "status": "draft",
+  "author": "[ISI]",
+  "validAsOf": "2026-10-21"
+}

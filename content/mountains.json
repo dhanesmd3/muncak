@@ -1,0 +1,119 @@
+[
+  {
+    "id": "basecamp",
+    "name": "Basecamp",
+    "shortName": "Basecamp",
+    "altitude": 0,
+    "province": "-",
+    "fact": "Titik awal pendakian. Cek logistik, ikat tali sepatu, dan bawa turun lagi sampahmu.",
+    "source": "Bukan gunung (titik awal)"
+  },
+  {
+    "id": "nglanggeran",
+    "name": "Gunung Api Purba Nglanggeran",
+    "shortName": "Nglanggeran",
+    "altitude": 700,
+    "province": "DI Yogyakarta",
+    "fact": "Gunung api purba di Gunungkidul yang kini jadi bagian dari Geopark Gunung Sewu.",
+    "source": "[ISI: sumber acuan ketinggian]"
+  },
+  {
+    "id": "batur",
+    "name": "Gunung Batur",
+    "shortName": "Batur",
+    "altitude": 1717,
+    "province": "Bali",
+    "fact": "Gunung api aktif di dalam kaldera besar, bersebelahan dengan Danau Batur. Favorit untuk menunggu matahari terbit.",
+    "source": "[ISI: sumber acuan ketinggian]"
+  },
+  {
+    "id": "tangkuban-parahu",
+    "name": "Gunung Tangkuban Parahu",
+    "shortName": "Tangkuban Parahu",
+    "altitude": 2084,
+    "province": "Jawa Barat",
+    "fact": "Namanya berarti \"perahu terbalik\", dari legenda Sangkuriang dan Dayang Sumbi.",
+    "source": "[ISI: sumber acuan ketinggian]"
+  },
+  {
+    "id": "bromo",
+    "name": "Gunung Bromo",
+    "shortName": "Bromo",
+    "altitude": 2329,
+    "province": "Jawa Timur",
+    "fact": "Berdiri di tengah kaldera Tengger yang dikelilingi lautan pasir.",
+    "source": "[ISI: sumber acuan ketinggian]"
+  },
+  {
+    "id": "prau",
+    "name": "Gunung Prau",
+    "shortName": "Prau",
+    "altitude": 2565,
+    "province": "Jawa Tengah",
+    "fact": "Ada di dataran tinggi Dieng. Terkenal dengan bukit-bukit hijau dan matahari terbitnya.",
+    "source": "[ISI: sumber acuan ketinggian]"
+  },
+  {
+    "id": "gede",
+    "name": "Gunung Gede",
+    "shortName": "Gede",
+    "altitude": 2958,
+    "province": "Jawa Barat",
+    "fact": "Bagian dari Taman Nasional Gunung Gede Pangrango, salah satu taman nasional pertama di Indonesia.",
+    "source": "[ISI: sumber acuan ketinggian]"
+  },
+  {
+    "id": "merbabu",
+    "name": "Gunung Merbabu",
+    "shortName": "Merbabu",
+    "altitude": 3145,
+    "province": "Jawa Tengah",
+    "fact": "Bertetangga dengan Gunung Merapi. Jalurnya terkenal dengan padang sabana yang luas.",
+    "source": "[ISI: sumber acuan ketinggian]"
+  },
+  {
+    "id": "slamet",
+    "name": "Gunung Slamet",
+    "shortName": "Slamet",
+    "altitude": 3428,
+    "province": "Jawa Tengah",
+    "fact": "Gunung tertinggi di Jawa Tengah dan tertinggi kedua di Pulau Jawa setelah Semeru.",
+    "source": "[ISI: sumber acuan ketinggian]"
+  },
+  {
+    "id": "semeru",
+    "name": "Gunung Semeru",
+    "shortName": "Semeru",
+    "altitude": 3676,
+    "province": "Jawa Timur",
+    "fact": "Semeru, 3.676 mdpl. Atap Pulau Jawa, puncaknya bernama Mahameru.",
+    "source": "[ISI: sumber acuan ketinggian]"
+  },
+  {
+    "id": "rinjani",
+    "name": "Gunung Rinjani",
+    "shortName": "Rinjani",
+    "altitude": 3726,
+    "province": "Nusa Tenggara Barat",
+    "fact": "Gunung api tertinggi kedua di Indonesia. Di kalderanya ada Danau Segara Anak.",
+    "source": "[ISI: sumber acuan ketinggian]"
+  },
+  {
+    "id": "kerinci",
+    "name": "Gunung Kerinci",
+    "shortName": "Kerinci",
+    "altitude": 3805,
+    "province": "Jambi",
+    "fact": "Gunung api tertinggi di Indonesia, berada di Taman Nasional Kerinci Seblat.",
+    "source": "[ISI: sumber acuan ketinggian]"
+  },
+  {
+    "id": "puncak-jaya",
+    "name": "Puncak Jaya (Cartenz)",
+    "shortName": "Cartenz",
+    "altitude": 4884,
+    "province": "Papua Tengah",
+    "fact": "Puncak tertinggi di Indonesia dan salah satu Seven Summits dunia.",
+    "source": "[ISI: sumber acuan ketinggian]"
+  }
+]

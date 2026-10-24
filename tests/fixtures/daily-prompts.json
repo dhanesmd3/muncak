@@ -1,0 +1,167 @@
+[
+  {
+    "id": "fixture-pelangi-001",
+    "prompt": "Sebutkan warna pelangi",
+    "category": "sains",
+    "difficulty": 1,
+    "closedSet": true,
+    "optionalPrefixes": ["warna"],
+    "answers": [
+      { "id": "merah", "text": "Merah", "tier": "basecamp" },
+      { "id": "kuning", "text": "Kuning", "tier": "basecamp" },
+      { "id": "hijau", "text": "Hijau", "aliases": ["ijo"], "tier": "basecamp" },
+      { "id": "biru", "text": "Biru", "tier": "camp" },
+      { "id": "ungu", "text": "Ungu", "tier": "camp" },
+      { "id": "jingga", "text": "Jingga", "aliases": ["oranye", "orange"], "tier": "treeline" },
+      { "id": "nila", "text": "Nila", "tier": "edelweiss" }
+    ],
+    "rejected": [{ "text": "Hitam", "reason": "Hitam tidak ada di pelangi." }],
+    "edelweissFact": "Nila adalah warna di antara biru dan ungu pada pelangi.",
+    "sources": ["fixture"],
+    "status": "draft",
+    "author": "fixture",
+    "validAsOf": "2026-10-21"
+  },
+  {
+    "id": "fixture-hari-001",
+    "prompt": "Sebutkan hari dalam seminggu",
+    "category": "nusantara",
+    "difficulty": 1,
+    "closedSet": true,
+    "optionalPrefixes": ["hari"],
+    "answers": [
+      { "id": "senin", "text": "Senin", "tier": "basecamp" },
+      { "id": "minggu", "text": "Minggu", "aliases": ["ahad"], "tier": "basecamp" },
+      { "id": "selasa", "text": "Selasa", "tier": "camp" },
+      { "id": "rabu", "text": "Rabu", "tier": "camp" },
+      { "id": "jumat", "text": "Jumat", "tier": "treeline" },
+      { "id": "sabtu", "text": "Sabtu", "tier": "summit" },
+      { "id": "kamis", "text": "Kamis", "tier": "edelweiss" }
+    ],
+    "edelweissFact": "Kata Kamis berasal dari bahasa Arab yang berarti kelima.",
+    "sources": ["fixture"],
+    "status": "draft",
+    "author": "fixture",
+    "validAsOf": "2026-10-21"
+  },
+  {
+    "id": "fixture-planet-001",
+    "prompt": "Sebutkan planet di tata surya",
+    "category": "sains",
+    "difficulty": 2,
+    "closedSet": true,
+    "optionalPrefixes": ["planet"],
+    "answers": [
+      { "id": "bumi", "text": "Bumi", "tier": "basecamp" },
+      { "id": "mars", "text": "Mars", "tier": "basecamp" },
+      { "id": "jupiter", "text": "Jupiter", "aliases": ["yupiter"], "tier": "camp" },
+      { "id": "saturnus", "text": "Saturnus", "tier": "camp" },
+      { "id": "venus", "text": "Venus", "tier": "treeline" },
+      { "id": "uranus", "text": "Uranus", "tier": "treeline" },
+      { "id": "neptunus", "text": "Neptunus", "tier": "summit" },
+      { "id": "merkurius", "text": "Merkurius", "tier": "edelweiss" }
+    ],
+    "rejected": [
+      {
+        "text": "Pluto",
+        "reason": "Sejak 2006 Pluto digolongkan sebagai planet kerdil."
+      }
+    ],
+    "edelweissFact": "Merkurius adalah planet yang paling dekat dengan Matahari.",
+    "sources": ["fixture"],
+    "status": "draft",
+    "author": "fixture",
+    "validAsOf": "2026-10-21"
+  },
+  {
+    "id": "fixture-alattulis-001",
+    "prompt": "Sebutkan alat tulis",
+    "category": "global",
+    "difficulty": 2,
+    "closedSet": false,
+    "answers": [
+      { "id": "pensil", "text": "Pensil", "tier": "basecamp" },
+      { "id": "pulpen", "text": "Pulpen", "aliases": ["bolpoin", "pena"], "tier": "basecamp" },
+      { "id": "penghapus", "text": "Penghapus", "aliases": ["setip"], "tier": "camp" },
+      { "id": "penggaris", "text": "Penggaris", "tier": "camp" },
+      { "id": "spidol", "text": "Spidol", "tier": "treeline" },
+      { "id": "rautan", "text": "Rautan", "tier": "summit" },
+      { "id": "krayon", "text": "Krayon", "tier": "edelweiss" }
+    ],
+    "edelweissFact": "Krayon dibuat dari lilin yang dicampur pewarna.",
+    "sources": ["fixture"],
+    "status": "draft",
+    "author": "fixture",
+    "validAsOf": "2026-10-21"
+  },
+  {
+    "id": "fixture-hewan-001",
+    "prompt": "Sebutkan hewan berkaki empat",
+    "category": "alam",
+    "difficulty": 3,
+    "closedSet": false,
+    "answers": [
+      { "id": "kucing", "text": "Kucing", "tier": "basecamp" },
+      { "id": "anjing", "text": "Anjing", "tier": "basecamp" },
+      { "id": "sapi", "text": "Sapi", "tier": "basecamp" },
+      { "id": "kambing", "text": "Kambing", "tier": "camp" },
+      { "id": "kuda", "text": "Kuda", "tier": "camp" },
+      { "id": "gajah", "text": "Gajah", "tier": "treeline" },
+      { "id": "jerapah", "text": "Jerapah", "tier": "treeline" },
+      { "id": "tapir", "text": "Tapir", "tier": "summit" },
+      { "id": "anoa", "text": "Anoa", "tier": "summit" },
+      { "id": "trenggiling", "text": "Trenggiling", "tier": "edelweiss" }
+    ],
+    "rejected": [{ "text": "Ayam", "reason": "Ayam berkaki dua, bukan empat." }],
+    "edelweissFact": "Trenggiling punya sisik keras dan bisa menggulung tubuhnya seperti bola.",
+    "sources": ["fixture"],
+    "status": "draft",
+    "author": "fixture",
+    "validAsOf": "2026-10-21"
+  },
+  {
+    "id": "fixture-buahkuning-001",
+    "prompt": "Sebutkan buah berwarna kuning",
+    "category": "kuliner",
+    "difficulty": 3,
+    "closedSet": false,
+    "optionalPrefixes": ["buah"],
+    "answers": [
+      { "id": "pisang", "text": "Pisang", "tier": "basecamp" },
+      { "id": "nanas", "text": "Nanas", "aliases": ["nenas"], "tier": "basecamp" },
+      { "id": "mangga", "text": "Mangga", "tier": "camp" },
+      { "id": "nangka", "text": "Nangka", "tier": "camp" },
+      { "id": "belimbing", "text": "Belimbing", "tier": "treeline" },
+      { "id": "lemon", "text": "Lemon", "tier": "summit" },
+      { "id": "cempedak", "text": "Cempedak", "tier": "edelweiss" }
+    ],
+    "edelweissFact": "Cempedak masih satu kerabat dengan nangka, tapi aromanya lebih kuat.",
+    "sources": ["fixture"],
+    "status": "draft",
+    "author": "fixture",
+    "validAsOf": "2026-10-21"
+  },
+  {
+    "id": "fixture-alatmusik-001",
+    "prompt": "Sebutkan alat musik",
+    "category": "pop",
+    "difficulty": 4,
+    "closedSet": false,
+    "answers": [
+      { "id": "gitar", "text": "Gitar", "tier": "basecamp" },
+      { "id": "piano", "text": "Piano", "tier": "basecamp" },
+      { "id": "drum", "text": "Drum", "tier": "basecamp" },
+      { "id": "biola", "text": "Biola", "tier": "camp" },
+      { "id": "seruling", "text": "Seruling", "aliases": ["suling"], "tier": "camp" },
+      { "id": "angklung", "text": "Angklung", "tier": "treeline" },
+      { "id": "kolintang", "text": "Kolintang", "tier": "summit" },
+      { "id": "tifa", "text": "Tifa", "tier": "summit" },
+      { "id": "sasando", "text": "Sasando", "tier": "edelweiss" }
+    ],
+    "edelweissFact": "Sasando adalah alat musik petik dari Pulau Rote, NTT.",
+    "sources": ["fixture"],
+    "status": "draft",
+    "author": "fixture",
+    "validAsOf": "2026-10-21"
+  }
+]

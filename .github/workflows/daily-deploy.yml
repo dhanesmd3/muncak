@@ -1,0 +1,37 @@
+name: Daily deploy
+
+# Builds and deploys every day at 23:45 WIB, so tomorrow's prompts appear just before
+# midnight (docs/05-teknis.md §9). If this fails, yesterday's deploy already contains
+# a "tomorrow" file for today.
+on:
+  schedule:
+    - cron: '45 16 * * *' # 16:45 UTC = 23:45 WIB
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: lts/*, cache: npm }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run validate:content
+      - run: npm test
+      - run: npm run build # includes build-daily
+        env:
+          VITE_LAUNCH_DATE: ${{ vars.VITE_LAUNCH_DATE }}
+          VITE_PAYLOAD_KEY: ${{ secrets.VITE_PAYLOAD_KEY }}
+      - name: Deploy to Cloudflare Pages
+        run: npx wrangler@4 pages deploy dist --project-name="${{ vars.CLOUDFLARE_PAGES_PROJECT }}" --branch=main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

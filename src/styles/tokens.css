@@ -1,0 +1,63 @@
+/* "Kabut Pagi" palette (docs/04-art-ui.md §3). Mirrors src/scene/palette.ts. */
+:root {
+  --malam: #1b1f3b;
+  --lembah: #2e3a5c;
+  --langit: #4a6fa5;
+  --kabut: #8fb8de;
+  --awan: #e8f1f2;
+  --mentari: #f4d58d;
+  --senja: #f29e4c;
+  --carrier: #d1495b;
+  --merah-tua: #8c2f39;
+  --hutan: #2d6a4f;
+  --daun: #52b788;
+  --lumut: #95d5b2;
+  --tanah: #6b4f3a;
+  --batu: #a68a64;
+  --abu: #9aa0a6;
+  --edelweiss: #fff3b0;
+
+  /* Roles */
+  --bg: var(--malam);
+  --panel: var(--lembah);
+  --text: var(--awan);
+  --text-muted: var(--abu);
+  --primary: var(--senja);
+  --on-primary: var(--malam); /* white on Senja is only 2.2:1 */
+  --danger: var(--carrier);
+  /* Decorative ✗ next to a wrong answer (aria-hidden). Not for text: Carrier is 3.7:1. */
+  --mark-wrong: var(--carrier);
+  --highlight: var(--mentari);
+  --border: var(--lembah);
+
+  /* Tier colors. Langit is too dark for text on Malam (3.2:1), so the Puncak label uses Kabut. */
+  --tier-basecamp: var(--batu);
+  --tier-camp: var(--senja);
+  --tier-treeline: var(--daun);
+  --tier-summit: var(--langit);
+  --tier-summit-text: var(--kabut);
+  --tier-edelweiss: var(--edelweiss);
+  --tier-fog: var(--abu);
+
+  --font-display: 'Press Start 2P', ui-monospace, monospace;
+  --font-body: 'Pixelify Sans', system-ui, sans-serif;
+
+  --max-width: 540px;
+  --tap: 44px;
+  --gap: 16px;
+}
+
+/* High contrast: black background, white text, outlined tier icons (docs/04-art-ui.md §9). */
+:root[data-contrast='high'] {
+  --bg: #000;
+  --panel: #000;
+  --text: #fff;
+  --text-muted: #fff;
+  --border: #fff;
+  --tier-basecamp: #fff;
+  --tier-camp: #fff;
+  --tier-treeline: #fff;
+  --tier-summit-text: #fff;
+  --tier-edelweiss: #fff;
+  --tier-fog: #fff;
+}

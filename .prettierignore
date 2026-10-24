@@ -1,0 +1,12 @@
+node_modules
+dist
+dev-dist
+public/daily
+public/fonts
+test-results
+playwright-report
+package-lock.json
+docs
+README.md
+CLAUDE.md
+content
