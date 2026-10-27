@@ -28,6 +28,12 @@ export function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(to) - Date.parse(from)) / DAY_MS);
 }
 
+/** Monday of the (Monday–Sunday) week containing `date`. */
+export function mondayOf(date: string): string {
+  const dow = new Date(Date.parse(date)).getUTCDay(); // 0 = Sunday
+  return addDays(date, -((dow + 6) % 7));
+}
+
 /** True for a real calendar date in YYYY-MM-DD form. */
 export function isValidDate(date: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;

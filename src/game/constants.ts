@@ -60,3 +60,40 @@ export const MOUNTAIN_FACT_MAX = 140;
 
 /** Retry interval when today's payload is not published yet (docs/05-teknis.md §9). */
 export const DAILY_RETRY_MS = 60_000;
+
+// Rarity from player data (docs/05-teknis.md §10.4). Tune once real data exists.
+export const RARITY_MIN_ROUNDS = 200;
+export const RARITY_PRIOR_WEIGHT = 50; // k
+export const RARITY_PRIOR: Record<Exclude<Tier, 'edelweiss'>, number> = {
+  basecamp: 0.15,
+  camp: 0.06,
+  treeline: 0.02,
+  summit: 0.005,
+};
+/** share ≥ min → tier, checked top to bottom. */
+export const RARITY_THRESHOLDS = [
+  { min: 0.1, tier: 'basecamp' },
+  { min: 0.03, tier: 'camp' },
+  { min: 0.01, tier: 'treeline' },
+  { min: 0, tier: 'summit' },
+] as const;
+
+// Backend (docs/05-teknis.md §10).
+export const NAME_MAX_LENGTH = 20; // group name & nickname
+export const GROUP_INACTIVE_DAYS = 90;
+export const MEMBER_RETENTION_DAYS = 365;
+export const ANSWER_LOG_RETENTION_DAYS = 730;
+export const ERROR_LOG_RETENTION_DAYS = 30;
+export const SALT_KEEP_DAYS = 2;
+export const TIER_SNAPSHOT_KEEP_DAYS = 7;
+export const MAX_PLAYS_PER_DAY = 20;
+export const MAX_SUGGESTIONS_PER_DAY = 30;
+export const MAX_GROUP_CREATES_PER_DAY = 5;
+export const MAX_GROUP_JOINS_PER_DAY = 20;
+export const MAX_ATTEMPTS_PER_ROUND = 40;
+export const MAX_EXPEDITION_ROUNDS = 200;
+/** Server clock is trusted when the device clock is off by more than this (docs/05-teknis.md §4). */
+export const CLOCK_SKEW_TOLERANCE_MS = 5 * 60 * 1000;
+/** Unknown answers are shown to editors only when typed from at least this many devices. */
+export const UNKNOWN_MIN_DEVICES = 3;
+export const UNKNOWN_REPORT_SIZE = 20;
