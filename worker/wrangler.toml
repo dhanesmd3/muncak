@@ -1,0 +1,20 @@
+# Muncak API (fase 2). docs/05-teknis.md §10.
+# Deploy: npm run worker:deploy   (builds worker/generated/content.json first)
+# Secrets: npx wrangler@4 secret put DEVICE_SECRET --config worker/wrangler.toml
+#          npx wrangler@4 secret put ADMIN_TOKEN   --config worker/wrangler.toml
+name = "muncak-api"
+main = "entry.ts"
+compatibility_date = "2026-10-01"
+
+# [ISI: domain] The API lives on the same domain as the game, under /api/*.
+# routes = [{ pattern = "[ISI: domain]/api/*", zone_name = "[ISI: domain]" }]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "muncak"
+database_id = "[ISI: id dari `wrangler d1 create muncak`]"
+migrations_dir = "migrations"
+
+[triggers]
+# 17:00 UTC = 00:00 WIB: new salt, freeze today's tiers, data retention.
+crons = ["0 17 * * *"]

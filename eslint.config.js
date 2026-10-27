@@ -4,7 +4,19 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'dev-dist', 'public', 'node_modules', 'test-results', 'playwright-report'] },
+  {
+    ignores: [
+      'dist',
+      'dev-dist',
+      'public',
+      'node_modules',
+      'test-results',
+      'playwright-report',
+      '**/.wrangler/**',
+      '.wrangler-dry',
+      'worker/generated',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
