@@ -109,6 +109,8 @@ describe('checkSchedule', () => {
         prompts: new Map(prompts.map((p) => [p.id, p])),
         mountains: [],
         schedule: new Map(schedule),
+        packs: [],
+        rarity: {},
       },
       report,
     );

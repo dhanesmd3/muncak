@@ -46,27 +46,38 @@ muncak/
 │   │   ├── match.ts
 │   │   ├── scoring.ts           # poin, mdpl, checkpoint, gelar
 │   │   ├── date.ts              # tanggal WIB, nomor hari, hitung mundur
-│   │   ├── daily.ts             # memuat soal harian
-│   │   └── reducer.ts           # state machine ronde
+│   │   ├── daily.ts             # cek & dekode payload harian
+│   │   ├── reducer.ts           # state machine ronde
+│   │   ├── play.ts              # skor ulang dari input mentah (dipakai Worker)
+│   │   ├── rarity.ts            # rumus kelangkaan (§10.4)
+│   │   ├── expedition.ts        # Ekspedisi: timer logistik bersama
+│   │   ├── groups.ts            # aturan & tipe Rombongan
+│   │   └── packs.ts             # musim Paket Tema
 │   ├── scene/                   # canvas: parallax, sprite (string pixel art di sprites.ts), kamera
 │   ├── audio/                   # SFX chiptune, disintesis WebAudio (tanpa file audio)
 │   ├── storage/                 # localStorage + migrasi versi
 │   ├── share/                   # teks share, Web Share API, WA fallback
-│   ├── api/                     # klien backend (fase 2)
+│   ├── api/                     # klien backend (fase 2), antrean kirim skor, file bank/paket
 │   ├── styles/tokens.css        # palet & ukuran sebagai CSS custom properties
 │   └── i18n/id.ts               # semua teks UI bahasa Indonesia
 ├── scripts/
 │   ├── validate-content.ts
-│   ├── build-daily.ts           # content → public/daily/*.json
+│   ├── build-daily.ts           # content → public/daily/*.json (fase 1)
+│   ├── build-bank.ts            # soal pool "bank" → public/bank/, public/packs/
+│   ├── build-worker-content.ts  # jadwal kemarin…+7 hari + bank → worker/generated/content.json
 │   ├── plan-schedule.ts         # bantu susun jadwal bulanan
 │   ├── generate-icons.ts        # ikon PWA, favicon, gambar Open Graph dari pixel art
-│   └── compute-rarity.ts        # fase 2
+│   └── compute-rarity.ts        # mingguan: data pemain → content/rarity.json + laporan
 ├── worker/                      # Cloudflare Worker (fase 2)
-│   ├── src/index.ts
-│   └── migrations/*.sql
+│   ├── entry.ts                 # entry wrangler (membaca generated/content.json)
+│   ├── src/                     # app.ts (router), plays, groups, misc, admin, cron, …
+│   ├── generated/               # hasil build-worker-content (tidak di-commit)
+│   ├── migrations/*.sql
+│   └── wrangler.toml
 ├── tests/
-│   ├── unit/
-│   ├── e2e/
+│   ├── unit/                    # termasuk unit/worker: API diuji ke SQLite sungguhan
+│   ├── support/fake-d1.ts       # D1 tiruan di atas node:sqlite
+│   ├── e2e/                     # Playwright: proyek "static" (fase 1) & "api" (fase 2)
 │   └── fixtures/                # payload harian palsu untuk test
 └── docs/
 ```
@@ -101,6 +112,7 @@ export interface Prompt {
   category: Category;
   difficulty: 1 | 2 | 3 | 4 | 5;
   closedSet: boolean;
+  pool?: 'daily' | 'bank';  // default 'daily'; 'bank' = Ekspedisi & Paket Tema
   optionalPrefixes?: string[];
   answers: Answer[];
   rejected?: Rejected[];
@@ -122,7 +134,7 @@ export interface DailyPayload {
 export interface Mountain {
   id: string;
   name: string;       // "Gunung Semeru"
-  shortName: string;  // "Semeru", dipakai di teks share
+  shortName: string;  // "Semeru", dipakai di teks share & klasemen
   altitude: number;   // mdpl
   province: string;
   fact: string;       // ≤ 140 karakter
@@ -136,7 +148,9 @@ Skema zod di `scripts/validate-content.ts` mencerminkan tipe di atas, ditambah a
 - Soal terbuka minimal 50 jawaban, soal tertutup minimal 30 (kalau kurang, keluarkan **peringatan**, bukan error).
 - Setelah dinormalisasi, tidak boleh ada kunci yang sama untuk dua jawaban berbeda, atau jawaban yang bertabrakan dengan `rejected`.
 - `id` file = nama file.
-- Jadwal: tiap tanggal tepat 7 id soal, semuanya berstatus `verified`, dan tidak ada soal yang muncul lagi kurang dari 30 hari sejak terakhir tampil.
+- Jadwal: tiap tanggal tepat 7 id soal, semuanya berstatus `verified` dengan pool `daily`, dan tidak ada soal yang muncul lagi kurang dari 30 hari sejak terakhir tampil.
+- Paket Tema (`content/packs/<id>.json`): tepat 7 soal `verified` dengan pool `bank`. Soal `bank` tidak boleh masuk jadwal Harian, supaya file Ekspedisi/Paket yang publik tidak pernah membocorkan jawaban Harian.
+- `rarity.json` hanya boleh mengubah tingkat jawaban yang ada, dan tidak boleh membuat atau menghapus Edelweiss.
 
 ---
 
@@ -310,6 +324,7 @@ Semua key diberi prefix versi supaya bisa dimigrasi.
 | `muncak:v1:expedition` | rekor Ekspedisi |
 | `muncak:v1:packs` | skor terbaik per paket |
 | `muncak:v1:groups` | daftar `{ code, name, nickname }` |
+| `muncak:v1:pending-play` | permainan harian yang selesai tapi belum diterima server (offline); dikirim ulang saat app dibuka atau koneksi kembali |
 
 - Semua baca/tulis dibungkus `try/catch`. Kalau storage tidak tersedia (mode privat, kuota penuh), game tetap jalan dengan state di memori dan menampilkan peringatan kecil "Progres tidak tersimpan".
 - Entri `daily:*` yang umurnya lebih dari 14 hari dihapus saat aplikasi dibuka.
@@ -329,7 +344,9 @@ content/mountains.json ─┘                                   └► vite buil
 - `build-daily.ts` hanya membuat file untuk **hari ini dan besok** (WIB). Cadangan 1 hari ini perlu untuk jaga-jaga deploy telat.
 - **Deploy otomatis setiap hari:** GitHub Actions cron jalan pukul **16:45 UTC (23:45 WIB)**, lalu build dan deploy, sehingga file hari berikutnya muncul tepat sebelum tengah malam. Kalau Actions gagal, file "besok" dari deploy kemarin masih ada.
 - Payload diberi **obfuscation ringan** (misalnya JSON → di-XOR dengan kunci tetap → base64) supaya jawaban tidak langsung kebaca di tab Network. Ini **bukan keamanan**, cuma supaya tidak kebaca sekilas. Pencocokan yang aman dari curang baru ada di fase 2 (§10.4).
-- Klien memuat `/daily/<todayWIB>.json`. Kalau 404 (deploy telat), tampilkan "Soal hari ini sedang disiapkan, coba lagi sebentar" dan coba ulang tiap 60 detik.
+- Klien memuat `/daily/<todayWIB>.json`. Kalau 404 (deploy telat), tampilkan "Soal hari ini sedang disiapkan, coba lagi sebentar" dan coba ulang tiap 60 detik. `public/404.html` ada supaya Cloudflare Pages benar-benar mengembalikan 404 (tanpa file itu, Pages mengirim `index.html` untuk path yang tidak ada); klien juga menganggap respons HTML sebagai "belum terbit".
+- `build-bank.ts` menerbitkan soal pool `bank` ke `public/bank/expedition.json` dan `public/packs/` (obfuscation yang sama). Soal Harian tidak pernah ikut.
+- **Fase 2:** kalau `VITE_API_BASE` diisi, `build-daily` tidak menulis file statis; payload hari ini diambil dari `GET /api/v1/daily` dan soal besok tidak bisa diambil. Deploy harian juga menjalankan migrasi D1 lalu `wrangler deploy` Worker (dengan konten kemarin s/d +7 hari dari `build-worker-content.ts`) sebelum deploy Pages.
 
 ```yaml
 # .github/workflows/daily-deploy.yml (cuplikan)
@@ -430,16 +447,32 @@ CREATE TABLE suggestions (
 | DELETE | `/api/v1/groups/:code/me` | Keluar dari Rombongan | |
 | POST | `/api/v1/suggestions` | `{ promptId, input }` | Usulan jawaban |
 | DELETE | `/api/v1/me` | Hapus semua data member | Log jawaban lama sudah anonim, jadi tidak ikut terhapus (dijelaskan di kebijakan privasi) |
+| POST | `/api/v1/events` | `{ name }` | Hitungan agregat per hari, tanpa ID (§12). Nama yang diterima: `session_started`, `session_finished`, `share_pressed`, `group_created` |
+| POST | `/api/v1/errors` | `{ message, version }` | Pesan error (maks. 500 karakter) & versi saja, tanpa ID (§12) |
+| GET | `/api/v1/admin/rarity` | Hitungan per jawaban + antrean tinjauan | Khusus editor: `Authorization: Bearer <ADMIN_TOKEN>`. Mati kalau secret tidak diisi |
+| DELETE | `/api/v1/admin/suggestions/:promptId` | Bersihkan usulan yang sudah ditinjau | Khusus editor |
+
+- Respons `GET /daily` membawa header `X-Server-Time` (epoch ms). Klien memakai jam server kalau jam HP meleset lebih dari 5 menit (§4).
+- `POST /plays` menerima tanggal hari ini atau kemarin (sesi yang dimulai sebelum tengah malam). Kiriman yang gagal karena offline disimpan di perangkat dan dikirim ulang.
+- Mode `expedition` dan `pack` hanya dicatat ke log (antrean tinjauan), tidak masuk `daily_scores`.
+- Visitor (belum gabung) yang membuka `GET /groups/:code` hanya menerima nama Rombongan dan jumlah anggota, tanpa nama panggilan. Sebelum peminta selesai main, total mingguan anggota lain juga tidak menyertakan skor hari itu.
+- **Pembekuan tingkat:** permintaan pertama hari itu (atau cron 00:00 WIB) menyimpan tingkat semua jawaban hari itu di `tier_snapshots`. Sepanjang hari, `GET /daily` dan penilaian `POST /plays` memakai snapshot itu, jadi deploy di tengah hari dengan `rarity.json` baru tidak mengubah tingkat hari itu.
 
 - **Skor Rombongan dihitung di server.** Klien mengirim jawaban mentah, lalu Worker menjalankan modul `src/game/match.ts` + `scoring.ts` yang sama. Klien tidak bisa asal mengirim "4.900 mdpl". Yang tidak bisa diverifikasi server cuma kecepatan menjawab, dan itu bisa diterima untuk game santai.
-- Satu `member_id` hanya boleh punya satu `daily_scores` per tanggal. Kiriman kedua ditolak.
-- **Pembatasan request:** pakai fitur rate limiting Cloudflare yang tersedia di paket yang dipakai, plus batas sederhana di Worker (misal maksimal 20 `plays` per perangkat per hari).
+- Satu `member_id` hanya boleh punya satu `daily_scores` per tanggal. Kiriman kedua ditolak (409) dan tidak dicatat ulang.
+- **Pembatasan request:** pakai fitur rate limiting Cloudflare yang tersedia di paket yang dipakai, plus batas sederhana di Worker per perangkat per hari (tabel `rate_limits`): 20 `plays`, 30 usulan, 5 Rombongan baru, 20 gabung.
 - Nama Rombongan & nama panggilan: maksimal 20 karakter, disaring dengan daftar kata kasar (`worker/src/badwords.ts`).
 - Cron harian Worker (00:00 WIB): buat `salt` baru, hapus salt yang lebih tua dari 2 hari, bekukan snapshot tingkat untuk hari ini, lalu jalankan retensi data sesuai [07-privasi.md](07-privasi.md) §2: Rombongan 90 hari tidak aktif, member & skor 12 bulan, log jawaban 24 bulan (diringkas jadi agregat).
 
 ### 10.4 Menghitung kelangkaan
 
-Dijalankan **mingguan** oleh `scripts/compute-rarity.ts` (atau cron Worker), hasilnya ditulis ke `content/rarity.json`.
+Dijalankan **mingguan** oleh `scripts/compute-rarity.ts` (workflow `weekly-rarity.yml`), yang mengambil hitungan dari `GET /api/v1/admin/rarity` lalu menulis `content/rarity.json` dan membuka PR. Format:
+
+```json
+{ "generatedAt": "2026-12-07T01:00:00Z", "prompts": { "<promptId>": { "<answerId>": "camp" } } }
+```
+
+`build-daily` dan `build-worker-content` menerapkan tingkat ini di atas tingkat manual. Prior rumus di bawah selalu diambil dari tingkat manual di file soal, bukan dari `rarity.json` lama.
 
 Untuk tiap soal `p`, hanya pakai log `mode = 'daily'` dan `outcome = 'accepted'`:
 
@@ -466,7 +499,17 @@ tingkat baru:
 - Ambang & `k` ditaruh di konstanta dan disetel setelah ada data nyata.
 - Tingkat baru berlaku mulai **jadwal berikutnya** (dibekukan per hari).
 - Simpan riwayat `rarity.json` di git supaya perubahannya bisa dilacak.
-- Laporan mingguan juga mengeluarkan **20 jawaban `unknown` terbanyak per soal** untuk antrean tinjauan editor (lihat [03-konten-soal.md](03-konten-soal.md) §7).
+- Laporan mingguan juga mengeluarkan **20 jawaban `unknown` terbanyak per soal** untuk antrean tinjauan editor (lihat [03-konten-soal.md](03-konten-soal.md) §7), hanya yang diketik dari ≥ 3 perangkat berbeda, plus usulan pemain sebagai prioritas. Laporan ini jadi artifact workflow, **tidak di-commit**, karena berisi teks ketikan pemain.
+
+### 10.5 Tabel tambahan (`0002_support.sql`)
+
+| Tabel | Isi | Retensi |
+|---|---|---|
+| `tier_snapshots` | Tingkat semua jawaban per tanggal (JSON) | 7 hari |
+| `rate_limits` | Hitungan request per `device_hash` (salt harian), tanggal, jenis | 2 hari |
+| `answer_aggregates` | Hitungan log jawaban yang lebih tua dari 24 bulan | Tanpa batas (sudah agregat) |
+| `event_counts` | Hitungan event per hari | Tanpa batas (sudah agregat) |
+| `error_logs` | Pesan error + versi aplikasi | 30 hari |
 
 ---
 
@@ -515,10 +558,13 @@ Kasus uji tanggal yang wajib ada: 23:59:59 WIB vs 00:00:00 WIB, perangkat dengan
 | `VITE_API_BASE` | Frontend (fase 2) | `/api/v1` |
 | `VITE_PAYLOAD_KEY` | Frontend | kunci obfuscation ringan |
 | `DEVICE_SECRET` | Worker secret | string acak 32 byte |
+| `ADMIN_TOKEN` | Worker secret (opsional) | token untuk `/api/v1/admin/*`; kosong = admin mati |
 | `CLOUDFLARE_API_TOKEN` | GitHub Actions secret | untuk deploy |
 | `CLOUDFLARE_ACCOUNT_ID` | GitHub Actions secret | untuk deploy |
 | `CLOUDFLARE_PAGES_PROJECT` | GitHub Actions variable | nama proyek Cloudflare Pages |
+| `MUNCAK_API_URL` | GitHub Actions variable / `.env` | `https://[ISI: domain]/api/v1`, untuk `compute-rarity` |
+| `MUNCAK_ADMIN_TOKEN` | GitHub Actions secret / `.env` | sama dengan `ADMIN_TOKEN` Worker |
 
-`VITE_LAUNCH_DATE` di GitHub Actions disimpan sebagai *variable*, `VITE_PAYLOAD_KEY` sebagai *secret*.
+`VITE_LAUNCH_DATE` dan `VITE_API_BASE` di GitHub Actions disimpan sebagai *variable*, `VITE_PAYLOAD_KEY` sebagai *secret*. Fase 2 aktif di deploy kalau variable `VITE_API_BASE` diisi. Untuk lokal, secret Worker ditaruh di `worker/.dev.vars` (tidak di-commit). `database_id` di `worker/wrangler.toml` diisi dari `npx wrangler@4 d1 create muncak`.
 
 Jangan pernah commit secret. Simpan contoh nilainya di `.env.example`.

@@ -2,7 +2,10 @@ name: Daily deploy
 
 # Builds and deploys every day at 23:45 WIB, so tomorrow's prompts appear just before
 # midnight (docs/05-teknis.md §9). If this fails, yesterday's deploy already contains
-# a "tomorrow" file for today.
+# a "tomorrow" file (phase 1) or tomorrow's prompts in the Worker (phase 2).
+#
+# Phase 2 is on when the repository variable VITE_API_BASE is set (e.g. /api/v1): the
+# Worker is then migrated and deployed first, so the API is ready before the new pages.
 on:
   schedule:
     - cron: '45 16 * * *' # 16:45 UTC = 23:45 WIB
@@ -17,6 +20,12 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      VITE_LAUNCH_DATE: ${{ vars.VITE_LAUNCH_DATE }}
+      VITE_PAYLOAD_KEY: ${{ secrets.VITE_PAYLOAD_KEY }}
+      VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,12 +35,13 @@ jobs:
       - run: npm run typecheck
       - run: npm run validate:content
       - run: npm test
-      - run: npm run build # includes build-daily
-        env:
-          VITE_LAUNCH_DATE: ${{ vars.VITE_LAUNCH_DATE }}
-          VITE_PAYLOAD_KEY: ${{ secrets.VITE_PAYLOAD_KEY }}
+      - run: npm run build # build-daily + build-bank + vite build
+
+      - name: Migrate D1 and deploy the Worker (phase 2)
+        if: ${{ vars.VITE_API_BASE != '' }}
+        run: |
+          npm run worker:migrate
+          npm run worker:deploy
+
       - name: Deploy to Cloudflare Pages
         run: npx wrangler@4 pages deploy dist --project-name="${{ vars.CLOUDFLARE_PAGES_PROJECT }}" --branch=main
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

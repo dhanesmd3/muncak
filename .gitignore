@@ -11,3 +11,11 @@ coverage/
 !.env.example
 *.log
 .DS_Store
+worker/generated/
+worker/.wrangler/
+.wrangler/
+public/bank/
+public/packs/
+worker/.dev.vars
+.wrangler-dry/
+reports/

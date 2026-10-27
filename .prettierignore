@@ -10,3 +10,7 @@ docs
 README.md
 CLAUDE.md
 content
+worker/generated
+worker/.wrangler
+public/bank
+public/packs

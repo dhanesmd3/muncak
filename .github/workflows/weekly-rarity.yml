@@ -1,0 +1,51 @@
+name: Weekly rarity
+
+# Recomputes answer tiers from player data and opens a PR with content/rarity.json
+# (docs/05-teknis.md §10.4). The review report (top unknown answers, suggestions) is a
+# workflow artifact, not committed: it contains text typed by players.
+# New tiers reach players from the next day after merge; each day's tiers are frozen.
+on:
+  schedule:
+    - cron: '0 1 * * 1' # Monday 01:00 UTC = 08:00 WIB
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  rarity:
+    if: ${{ vars.VITE_API_BASE != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: lts/*, cache: npm }
+      - run: npm ci
+      - run: npm run compute:rarity
+        env:
+          MUNCAK_API_URL: ${{ vars.MUNCAK_API_URL }}
+          MUNCAK_ADMIN_TOKEN: ${{ secrets.MUNCAK_ADMIN_TOKEN }}
+      - run: npm run validate:content
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rarity-report
+          path: reports/
+          retention-days: 30
+      - name: Open a pull request when tiers changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- content/rarity.json && git ls-files --error-unmatch content/rarity.json >/dev/null 2>&1; then
+            echo "No tier changes."
+            exit 0
+          fi
+          branch="rarity/$(date -u +%Y-%m-%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add content/rarity.json
+          git commit -m "content: update rarity tiers from player data"
+          git push origin "$branch"
+          gh pr create --title "content: update rarity tiers" \
+            --body "Weekly rarity update (scripts/compute-rarity.ts). See the rarity-report artifact of this run for tier changes, unknown answers and player suggestions."

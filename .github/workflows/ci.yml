@@ -21,6 +21,10 @@ jobs:
         env:
           VITE_LAUNCH_DATE: ${{ vars.VITE_LAUNCH_DATE }}
           VITE_PAYLOAD_KEY: ${{ secrets.VITE_PAYLOAD_KEY }}
+      - name: Worker bundles (dry run, fixture content)
+        run: |
+          npx tsx scripts/build-worker-content.ts --fixture
+          cd worker && npx wrangler@4 deploy --dry-run --outdir ../.wrangler-dry
 
   e2e:
     if: github.event_name == 'pull_request'

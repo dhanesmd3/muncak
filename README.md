@@ -20,8 +20,8 @@ Gampangnya: **Family 100 kebalikan, sambil naik gunung.**
 | Fase | Isi | Status |
 |---|---|---|
 | 0 | Uji konten (30 soal, playtest manual) | ⏳ Belum mulai |
-| 1 | Versi pertama: Muncak Harian, share hasil, statistik | ⏳ |
-| 2 | Kelangkaan berbasis data, Ekspedisi, Paket Tema, Rombongan | ⏳ |
+| 1 | Versi pertama: Muncak Harian, share hasil, statistik | 🧩 Kode selesai, menunggu konten `verified` & checklist rilis |
+| 2 | Kelangkaan berbasis data, Ekspedisi, Paket Tema, Rombongan | 🧩 Kode selesai (Worker + D1), belum di-deploy |
 | 3 | Komunitas, Mode Kelas, PWA penuh | ⏳ |
 
 Detailnya ada di [docs/06-roadmap.md](docs/06-roadmap.md).
@@ -45,10 +45,29 @@ npm run lint             # ESLint + Prettier
 npm run typecheck        # tsc
 npm run validate:content # cek semua file soal sesuai skema
 npm run plan:schedule -- 2026-12          # usulan jadwal sebulan dari soal verified
-npm run build            # build-daily + build produksi ke dist/
+npm run build            # build-daily + build-bank + build produksi ke dist/
 ```
 
-`npm run dev:fixture` menulis payload palsu ke `public/daily/` (folder hasil generate, tidak di-commit). Jangan deploy hasilnya; `npm run build` selalu membersihkan folder itu dulu.
+`npm run dev:fixture` menulis payload palsu ke `public/daily/`, `public/bank/`, dan `public/packs/` (folder hasil generate, tidak di-commit). Jangan deploy hasilnya; `npm run build` selalu membersihkan folder itu dulu.
+
+### Backend (fase 2) di lokal
+
+Mode backend aktif kalau `VITE_API_BASE=/api/v1` ada di `.env`. Tulis di file `.env`, jangan sebagai variabel shell di Git Bash, karena Git Bash mengubah `/api/v1` jadi path Windows.
+
+```bash
+# worker/.dev.vars (tidak di-commit):
+#   DEVICE_SECRET=string-acak-lokal
+#   ADMIN_TOKEN=token-admin-lokal
+npm run worker:dev       # Worker + D1 lokal di :8787 dengan soal palsu
+npm run dev              # terminal kedua; Vite meneruskan /api ke :8787
+```
+
+### Mengaktifkan fase 2 di produksi
+
+1. `npx wrangler@4 d1 create muncak`, lalu salin `database_id` ke `worker/wrangler.toml`, dan isi `routes` dengan domain.
+2. `npx wrangler@4 secret put DEVICE_SECRET --config worker/wrangler.toml` (string acak 32 byte). Opsional: `ADMIN_TOKEN` untuk laporan kelangkaan.
+3. Di GitHub: variable `VITE_API_BASE=/api/v1` dan `MUNCAK_API_URL`, secret `MUNCAK_ADMIN_TOKEN`. Deploy harian lalu menjalankan migrasi D1 dan deploy Worker sebelum Pages.
+4. Perbarui tanggal Kebijakan Privasi dan jalankan checklist di [docs/07-privasi.md](docs/07-privasi.md) §6.
 
 ---
 

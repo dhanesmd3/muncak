@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:fixture": "tsx scripts/build-daily.ts --fixture && vite",
-    "build": "tsx scripts/build-daily.ts && vite build",
+    "dev:fixture": "tsx scripts/build-daily.ts --fixture && tsx scripts/build-bank.ts --fixture && vite",
+    "build": "tsx scripts/build-daily.ts && tsx scripts/build-bank.ts && vite build",
     "build-daily": "tsx scripts/build-daily.ts",
+    "build-bank": "tsx scripts/build-bank.ts",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -17,7 +18,12 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "validate:content": "tsx scripts/validate-content.ts",
     "plan:schedule": "tsx scripts/plan-schedule.ts",
-    "generate:icons": "tsx scripts/generate-icons.ts"
+    "compute:rarity": "tsx scripts/compute-rarity.ts",
+    "generate:icons": "tsx scripts/generate-icons.ts",
+    "worker:content": "tsx scripts/build-worker-content.ts",
+    "worker:dev": "tsx scripts/build-worker-content.ts --fixture && cd worker && npx wrangler@4 d1 migrations apply muncak --local && npx wrangler@4 dev --port 8787",
+    "worker:migrate": "cd worker && npx wrangler@4 d1 migrations apply muncak --remote",
+    "worker:deploy": "tsx scripts/build-worker-content.ts && cd worker && npx wrangler@4 deploy"
   },
   "dependencies": {
     "preact": "^10.29.8"

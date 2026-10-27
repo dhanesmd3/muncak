@@ -41,6 +41,8 @@ Indonesia punya **UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP)
 | Usulan jawaban | Antrean tinjauan editor | Tanpa ID apa pun | Sampai selesai ditinjau |
 | Error aplikasi | Memperbaiki bug | Pesan error + versi aplikasi, tanpa ID | 30 hari |
 | Hitungan event (sesi selesai, share ditekan) | Memahami pemakaian | Agregat per hari, tanpa ID | Tanpa batas (sudah agregat) |
+| Hitungan request per perangkat (pembatas spam) | Mencegah spam | `device_hash` dengan salt harian, jadi anonim setelah salt dihapus | 2 hari |
+| Snapshot tingkat jawaban per hari | Semua pemain dinilai sama dalam satu hari | Tanpa data pemain | 7 hari |
 
 **Yang tidak pernah dikumpulkan:** nama asli, email, nomor HP, tanggal lahir, lokasi GPS, daftar kontak, foto, sidik jari perangkat (fingerprinting), cookie iklan.
 

@@ -30,7 +30,9 @@ npm run test:e2e          # Playwright
 npm run lint              # ESLint + Prettier check
 npm run typecheck         # tsc --noEmit
 npm run validate:content  # validasi semua file di content/
-npm run build             # build-daily + vite build
+npm run build             # build-daily + build-bank + vite build
+npm run worker:dev        # Worker + D1 lokal (fase 2) di :8787, soal palsu
+npm run compute:rarity    # data pemain → content/rarity.json (mingguan)
 ```
 
 Sebelum menyatakan pekerjaan selesai: `lint`, `typecheck`, `test`, dan (kalau menyentuh content/) `validate:content` harus lulus.
@@ -40,6 +42,7 @@ Sebelum menyatakan pekerjaan selesai: `lint`, `typecheck`, `test`, dan (kalau me
 - **Kode, nama variabel, key JSON:** bahasa Inggris.
 - **Semua teks yang tampil ke pemain:** bahasa Indonesia, disimpan di `src/i18n/id.ts`, tidak di-hardcode di komponen. Sapaan pakai "kamu".
 - **Tingkat jawaban (ID kode):** `basecamp`, `camp`, `treeline`, `summit`, `edelweiss`. Kabut (waktu habis) = `fog`.
+- **Soal Ekspedisi & Paket Tema** memakai `"pool": "bank"` dan tidak pernah masuk jadwal Harian (file mereka publik di browser).
 - **Angka tuning** hanya ada di `src/game/constants.ts`. Kalau ada yang diubah, perbarui juga tabel di `docs/02-game-design.md` §8.
 - `src/game/` adalah logika murni: tidak boleh import Preact, DOM, `window`, atau `localStorage`. Fungsi yang butuh waktu menerima `now` sebagai parameter.
 - Komponen fungsional + hooks. State game lewat `useReducer` di `src/game/reducer.ts`.

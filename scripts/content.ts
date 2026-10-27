@@ -13,7 +13,9 @@ import {
 } from '../src/game/constants';
 import { daysBetween, isValidDate } from '../src/game/date';
 import { collectKeys, refId } from '../src/game/match';
+import { applyTiers, type TierMap } from '../src/game/rarity';
 import type { Category, Mountain, Prompt } from '../src/game/types';
+export { inSeason } from '../src/game/packs';
 
 export const CATEGORIES = [
   'nusantara',
@@ -54,6 +56,7 @@ export const PromptSchema = z.strictObject({
   category: z.enum(CATEGORIES),
   difficulty: z.literal([1, 2, 3, 4, 5]),
   closedSet: z.boolean(),
+  pool: z.enum(['daily', 'bank']).optional(),
   optionalPrefixes: z.array(nonEmpty).optional(),
   answers: z.array(AnswerSchema).min(1),
   rejected: z.array(RejectedSchema).optional(),
@@ -77,6 +80,27 @@ export const MountainSchema = z.strictObject({
 
 export const ScheduleSchema = z.record(z.string(), z.array(z.string()));
 
+const monthDay = z.string().regex(/^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, 'must be MM-DD');
+
+export const PackSchema = z.strictObject({
+  id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'must be a lowercase slug'),
+  title: nonEmpty.max(40),
+  description: nonEmpty.max(140),
+  prompts: z.array(z.string()),
+  season: z.strictObject({ from: monthDay, to: monthDay }).optional(),
+});
+export type PackFile = z.infer<typeof PackSchema>;
+
+/** content/rarity.json, written by scripts/compute-rarity.ts. */
+export const RaritySchema = z.strictObject({
+  generatedAt: z.string(),
+  prompts: z.record(z.string(), z.record(z.string(), z.enum(TIERS))),
+});
+export type RarityFile = z.infer<typeof RaritySchema>;
+
+/** Pool of a prompt; prompts without the field are daily prompts. */
+export const poolOf = (p: Prompt) => p.pool ?? 'daily';
+
 export const isPlaceholder = (s: string) => s.includes('[ISI');
 
 export interface Report {
@@ -89,6 +113,9 @@ export interface Content {
   mountains: Mountain[];
   /** date → prompt ids, merged from every schedule file, sorted by date. */
   schedule: Map<string, string[]>;
+  packs: PackFile[];
+  /** promptId → answerId → tier from player data (empty until compute-rarity runs). */
+  rarity: Record<string, TierMap>;
 }
 
 function readJson(file: string, report: Report): unknown {
@@ -199,6 +226,9 @@ export function checkSchedule(content: Content, report: Report): void {
       if (p.status !== 'verified') {
         report.errors.push(`${at}: "${id}" is ${p.status}, only verified prompts may be scheduled`);
       }
+      if (poolOf(p) !== 'daily') {
+        report.errors.push(`${at}: "${id}" is a bank prompt (Ekspedisi/Paket), not for Harian`);
+      }
       const prev = lastShown.get(id);
       if (prev && daysBetween(prev, date) < REPEAT_MIN_DAYS) {
         report.errors.push(
@@ -210,10 +240,59 @@ export function checkSchedule(content: Content, report: Report): void {
   }
 }
 
+/** Paket Tema: 7 distinct verified bank prompts each (docs/02-game-design.md §5.2). */
+export function checkPacks(content: Content, report: Report): void {
+  const ids = new Set<string>();
+  for (const pack of content.packs) {
+    const at = `pack ${pack.id}`;
+    if (ids.has(pack.id)) report.errors.push(`${at}: duplicate pack id`);
+    ids.add(pack.id);
+    if (pack.prompts.length !== ROUNDS_PER_DAY) {
+      report.errors.push(`${at}: needs exactly ${ROUNDS_PER_DAY} prompts`);
+    }
+    if (new Set(pack.prompts).size !== pack.prompts.length) {
+      report.errors.push(`${at}: same prompt listed twice`);
+    }
+    for (const id of pack.prompts) {
+      const p = content.prompts.get(id);
+      if (!p) report.errors.push(`${at}: unknown prompt "${id}"`);
+      else if (p.status !== 'verified') report.errors.push(`${at}: "${id}" is ${p.status}`);
+      else if (poolOf(p) !== 'bank') {
+        report.errors.push(`${at}: "${id}" is a daily prompt; packs use pool "bank" only`);
+      }
+    }
+  }
+}
+
+/** rarity.json may only re-tier existing answers, and never to or from Edelweiss. */
+export function checkRarity(content: Content, report: Report): void {
+  for (const [promptId, tiers] of Object.entries(content.rarity)) {
+    const p = content.prompts.get(promptId);
+    if (!p) {
+      report.warnings.push(`rarity.json: unknown prompt "${promptId}" (ignored)`);
+      continue;
+    }
+    for (const [answerId, tier] of Object.entries(tiers)) {
+      const a = p.answers.find((x) => x.id === answerId);
+      if (!a)
+        report.warnings.push(`rarity.json: ${promptId} has no answer "${answerId}" (ignored)`);
+      else if ((a.tier === 'edelweiss') !== (tier === 'edelweiss')) {
+        report.errors.push(`rarity.json: ${promptId}/${answerId} cannot change Edelweiss`);
+      }
+    }
+  }
+}
+
 /** Load and fully validate everything under `root` (the content/ directory). */
 export function loadContent(root: string): { content: Content; report: Report } {
   const report: Report = { errors: [], warnings: [] };
-  const content: Content = { prompts: new Map(), mountains: [], schedule: new Map() };
+  const content: Content = {
+    prompts: new Map(),
+    mountains: [],
+    schedule: new Map(),
+    packs: [],
+    rarity: {},
+  };
 
   for (const file of jsonFiles(join(root, 'prompts'))) {
     const parsed = PromptSchema.safeParse(readJson(file, report));
@@ -260,10 +339,53 @@ export function loadContent(root: string): { content: Content; report: Report } 
   content.schedule = new Map(entries);
   checkSchedule(content, report);
 
+  for (const file of jsonFiles(join(root, 'packs'))) {
+    const parsed = PackSchema.safeParse(readJson(file, report));
+    if (!parsed.success) {
+      report.errors.push(...issues(file, parsed.error));
+      continue;
+    }
+    if (parsed.data.id !== basename(file, '.json')) {
+      report.errors.push(`${file}: id "${parsed.data.id}" ≠ file name`);
+    }
+    content.packs.push(parsed.data);
+  }
+  checkPacks(content, report);
+
+  const rarityFile = join(root, 'rarity.json');
+  if (existsSync(rarityFile)) {
+    const parsed = RaritySchema.safeParse(readJson(rarityFile, report));
+    if (parsed.success) content.rarity = parsed.data.prompts;
+    else report.errors.push(...issues(rarityFile, parsed.error));
+  }
+  checkRarity(content, report);
+
   return { content, report };
 }
 
 export function printReport(report: Report): void {
   for (const w of report.warnings) console.warn(`warning: ${w}`);
   for (const e of report.errors) console.error(`error:   ${e}`);
+}
+
+/** Stable sort, easiest first (docs/02-game-design.md §2). */
+export function byDifficulty(prompts: readonly Prompt[]): Prompt[] {
+  return prompts
+    .map((p, i) => ({ p, i }))
+    .sort((a, b) => a.p.difficulty - b.p.difficulty || a.i - b.i)
+    .map(({ p }) => p);
+}
+
+/** The prompts of a scheduled day, ordered and with data tiers applied; undefined if unscheduled. */
+export function promptsForDate(content: Content, date: string): Prompt[] | undefined {
+  const ids = content.schedule.get(date);
+  if (!ids) return undefined;
+  return byDifficulty(ids.map((id) => applyTiers(content.prompts.get(id)!, content.rarity[id])));
+}
+
+/** Verified bank prompts (Ekspedisi). */
+export function bankPrompts(content: Content): Prompt[] {
+  return [...content.prompts.values()].filter(
+    (p) => p.status === 'verified' && poolOf(p) === 'bank',
+  );
 }

@@ -36,6 +36,7 @@ Soal harus lolos **semua** syarat ini:
 | `category` | enum | ✅ | `nusantara` · `global` · `kuliner` · `sejarah` · `alam` · `pop` · `bola` · `sains` |
 | `difficulty` | 1–5 | ✅ | 1 = paling gampang. Dipakai untuk mengurutkan soal harian. |
 | `closedSet` | boolean | ✅ | `true` kalau daftar jawabannya pasti dan lengkap |
+| `pool` | enum | — | `daily` (default) untuk Muncak Harian, `bank` untuk Ekspedisi & Paket Tema (lihat bagian 10) |
 | `optionalPrefixes` | string[] | — | Kata depan yang boleh ada atau tidak, misalnya `["provinsi"]`, `["sambal"]`, `["gunung"]` |
 | `answers` | Answer[] | ✅ | Semua jawaban yang diterima |
 | `rejected` | Rejected[] | — | Jawaban yang sering diketik tapi salah, beserta alasannya |
@@ -402,3 +403,33 @@ Jadwal disusun per bulan di `content/schedule/YYYY-MM.json` dengan skrip pembant
 - Sebutkan alat transportasi
 
 > Catatan: "negara di Amerika Selatan" melanggar syarat minimal 30 jawaban. Boleh dipakai sesekali sebagai soal pemanasan slot 1, tapi jangan jadi kebiasaan.
+
+---
+
+## 10. Bank soal Ekspedisi & Paket Tema
+
+Ekspedisi dan Paket Tema bisa dimainkan kapan saja, jadi soalnya harus dikirim ke browser lebih dulu. Supaya tidak membocorkan Muncak Harian, soal untuk dua mode ini **terpisah** dari soal Harian:
+
+- Tandai soalnya dengan `"pool": "bank"`. Validator menolak soal `bank` di jadwal Harian dan soal `daily` di Paket Tema.
+- Ekspedisi memakai **semua** soal `bank` berstatus `verified`, diacak.
+- Satu Paket Tema = satu file `content/packs/<id>.json`:
+
+```json
+{
+  "id": "kuliner",
+  "title": "Kuliner",
+  "description": "Sambal, soto, kerupuk, dan teman-temannya.",
+  "prompts": ["kuliner-sambal-101", "kuliner-soto-101", "…7 id soal bank…"]
+}
+```
+
+| Field | Keterangan |
+|---|---|
+| `id` | Slug, sama dengan nama file |
+| `title` | Maks. 40 karakter |
+| `description` | Maks. 140 karakter |
+| `prompts` | Tepat 7 id soal `bank` berstatus `verified`, tidak boleh dobel |
+| `season` | Opsional, `{ "from": "08-01", "to": "08-31" }` (MM-DD, WIB, boleh melewati akhir tahun seperti `12-15` s/d `01-05`). Di luar musimnya paket tidak tampil. |
+
+Paket awal yang direncanakan: Nusantara, Global, Bola, Kuliner, Musik & Film, Sains & Teknologi, Sejarah. Paket musiman: 17 Agustus, Ramadan, Akhir Tahun. Tanggal Ramadan berubah tiap tahun, jadi `season`-nya harus diperbarui tiap tahun.
+
