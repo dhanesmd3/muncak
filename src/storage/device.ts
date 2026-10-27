@@ -16,8 +16,19 @@ function randomId(): string {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
 
-export function ensureDevice(now: number): void {
+export function ensureDevice(now: number): string {
   const saved = readJson<Device>(KEYS.device);
-  if (saved && typeof saved.id === 'string') return;
-  writeJson(KEYS.device, { id: randomId(), createdAt: now } satisfies Device);
+  if (saved && typeof saved.id === 'string') return saved.id;
+  const id = randomId();
+  writeJson(KEYS.device, { id, createdAt: now } satisfies Device);
+  return id;
+}
+
+/** The device id, sent only to our own API in the X-Muncak-Device header. */
+export function deviceId(): string | null {
+  try {
+    return ensureDevice(Date.now());
+  } catch {
+    return null;
+  }
 }

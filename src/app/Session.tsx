@@ -19,36 +19,16 @@ export function useSession(): SessionValue | null {
   return useContext(SessionContext);
 }
 
-interface Props {
-  payload: DailyPayload;
-  mountains: readonly Mountain[];
-  vibrateOn: boolean;
-  onFinished: (state: DailyState) => void;
-  onPhase: (phase: DailyState['phase']) => void;
-  children: ComponentChildren;
-}
-
-/** Owns one day's game state. Keyed by date, so a new day starts a new session. */
-export function SessionProvider({
-  payload,
-  mountains,
-  vibrateOn,
-  onFinished,
-  onPhase,
-  children,
-}: Props) {
-  const reducer = useMemo(() => createDailyReducer(payload), [payload]);
-  const [state, dispatch] = useReducer(reducer, payload, (p) =>
-    restoreDailyState(readJson(KEYS.daily(p.date)), p, Date.now()),
-  );
-
-  // Every state change is written to storage right away (docs/05-teknis.md §7).
-  useEffect(() => {
-    writeJson(KEYS.daily(state.date), { ...state, feedback: null });
-    onPhase(state.phase);
-  }, [state]);
-
-  // Sounds, vibration and stats on transitions.
+/**
+ * Sounds, vibration and the "finished" callback on round transitions. Shared by Muncak
+ * Harian and Paket Tema, which use the same rounds.
+ */
+export function useRoundEffects(
+  state: DailyState,
+  mountains: readonly Mountain[],
+  vibrateOn: boolean,
+  onFinished: (state: DailyState) => void,
+): void {
   const prev = useRef(state);
   useEffect(() => {
     const before = prev.current;
@@ -78,6 +58,38 @@ export function SessionProvider({
     }
     if (state.phase === 'finished' && before.phase !== 'finished') onFinished(state);
   }, [state]);
+}
+
+interface Props {
+  payload: DailyPayload;
+  mountains: readonly Mountain[];
+  vibrateOn: boolean;
+  onFinished: (state: DailyState) => void;
+  onPhase: (phase: DailyState['phase']) => void;
+  children: ComponentChildren;
+}
+
+/** Owns one day's game state. Keyed by date, so a new day starts a new session. */
+export function SessionProvider({
+  payload,
+  mountains,
+  vibrateOn,
+  onFinished,
+  onPhase,
+  children,
+}: Props) {
+  const reducer = useMemo(() => createDailyReducer(payload), [payload]);
+  const [state, dispatch] = useReducer(reducer, payload, (p) =>
+    restoreDailyState(readJson(KEYS.daily(p.date)), p, Date.now()),
+  );
+
+  // Every state change is written to storage right away (docs/05-teknis.md §7).
+  useEffect(() => {
+    writeJson(KEYS.daily(state.date), { ...state, feedback: null });
+    onPhase(state.phase);
+  }, [state]);
+
+  useRoundEffects(state, mountains, vibrateOn, onFinished);
 
   const value = useMemo(() => ({ payload, state, dispatch }), [payload, state]);
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

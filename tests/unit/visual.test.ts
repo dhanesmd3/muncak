@@ -93,8 +93,14 @@ describe('text contrast ≥ 4.5:1 for the pairs used in app.css', () => {
     ['awan on lembah (panels)', P.awan, P.lembah],
     ['edelweiss on lembah (stat values)', P.edelweiss, P.lembah],
     ['mentari on lembah (checkpoint heading)', P.mentari, P.lembah],
+    ['kabut on lembah (muted text on panels)', P.kabut, P.lembah],
+    ['malam on awan (text inputs)', P.malam, P.awan],
   ])('%s', (_, fg, bg) => {
     expect(contrast(fg, bg)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('Abu is too dark for text on Lembah panels', () => {
+    expect(contrast(P.abu, P.lembah)).toBeLessThan(4.5);
   });
 
   it('Langit and Carrier are never used as text on Malam', () => {

@@ -1,3 +1,4 @@
+import { API_ENABLED } from '../api/client';
 import { ROUNDS_PER_DAY } from '../game/constants';
 import { t } from '../i18n/id';
 import type { DailyLoad } from './useDaily';
@@ -8,7 +9,9 @@ interface Props {
   onRetry: () => void;
   streak: number;
   onPlay: () => void;
-  onNavigate: (screen: 'stats' | 'settings' | 'onboarding' | 'about') => void;
+  onNavigate: (
+    screen: 'stats' | 'settings' | 'onboarding' | 'about' | 'expedition' | 'packs' | 'groups',
+  ) => void;
 }
 
 export function Home({ load, onRetry, streak, onPlay, onNavigate }: Props) {
@@ -56,6 +59,19 @@ export function Home({ load, onRetry, streak, onPlay, onNavigate }: Props) {
       <h1 class="logo">{t.appName.toUpperCase()}</h1>
       <p class="tagline">{t.tagline}</p>
       <div class="home-main">{main}</div>
+      <div class="home-modes">
+        <button class="btn" onClick={() => onNavigate('expedition')}>
+          🎒 {t.home.expedition}
+        </button>
+        <button class="btn" onClick={() => onNavigate('packs')}>
+          🗂️ {t.home.packs}
+        </button>
+        {API_ENABLED && (
+          <button class="btn btn-span" onClick={() => onNavigate('groups')}>
+            ⛺ {t.home.groups}
+          </button>
+        )}
+      </div>
       {streak > 0 && <p class="streak">{t.home.streak(streak)}</p>}
       <nav class="home-nav">
         <button class="btn" onClick={() => onNavigate('stats')}>

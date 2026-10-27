@@ -9,11 +9,20 @@ interface Props {
   settings: Settings;
   onChange: (next: Settings) => void;
   onDeleteData: () => void;
+  /** Shown when the server part of "Hapus data saya" failed. */
+  error?: string;
   onPrivacy: () => void;
   onBack: () => void;
 }
 
-export function SettingsScreen({ settings, onChange, onDeleteData, onPrivacy, onBack }: Props) {
+export function SettingsScreen({
+  settings,
+  onChange,
+  onDeleteData,
+  error,
+  onPrivacy,
+  onBack,
+}: Props) {
   return (
     <main class="screen settings">
       <ScreenHeader title={t.settings.title} onBack={onBack} />
@@ -45,6 +54,11 @@ export function SettingsScreen({ settings, onChange, onDeleteData, onPrivacy, on
       >
         {t.settings.deleteData}
       </button>
+      {error && (
+        <p class="form-error" role="alert">
+          {error}
+        </p>
+      )}
     </main>
   );
 }

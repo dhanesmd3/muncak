@@ -50,7 +50,7 @@ test('plays a full day: correct, rejected, unknown, timeout, result and share', 
 
   // 5. Time runs out → Kabut
   await expect(page.getByText('Soal 5/7')).toBeVisible();
-  await page.clock.runFor(26_000);
+  await page.clock.fastForward(26_000);
   await expect(page.getByText('Kabut turun! 🌫️')).toBeVisible();
   await next(page);
 

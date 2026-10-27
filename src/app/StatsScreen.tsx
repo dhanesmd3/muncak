@@ -1,7 +1,8 @@
-import { TierIcon } from '../components/PixelIcon';
+import { PixelIcon, TierIcon } from '../components/PixelIcon';
 import { OUTCOMES, averageAltitude, currentStreak, type Stats } from '../game/stats';
 import type { Mountain } from '../game/types';
 import { formatNumber, t, tierName } from '../i18n/id';
+import { mountainCard } from '../scene/sprites';
 import { ScreenHeader } from './ScreenHeader';
 
 interface Props {
@@ -74,9 +75,17 @@ export function StatsScreen({ stats, today, mountains, onBack }: Props) {
           const got = stats.mountains.includes(m.id);
           return (
             <li key={m.id} class={got ? 'album-card got' : 'album-card'}>
-              <span class="album-icon" aria-hidden="true">
-                {got ? '▲' : '?'}
-              </span>
+              {got ? (
+                <PixelIcon
+                  sprite={mountainCard(m.id, m.altitude)}
+                  scale={2}
+                  class="album-card-art"
+                />
+              ) : (
+                <span class="album-icon" aria-hidden="true">
+                  ?
+                </span>
+              )}
               <span class="album-name">{got ? m.shortName : t.stats.unknownMountain}</span>
               <span class="album-alt">{t.mdpl(m.altitude)}</span>
             </li>

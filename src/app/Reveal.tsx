@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
+import { API_ENABLED } from '../api/client';
 import { TierIcon } from '../components/PixelIcon';
+import { SuggestButton } from '../components/SuggestButton';
 import { altitude, checkpointsPassed, totalPoints } from '../game/scoring';
 import type { Mountain, Prompt } from '../game/types';
 import { REPORT_URL } from '../config';
@@ -42,6 +44,13 @@ export function Reveal({
   const rare = prompt.answers
     .filter((a) => a.tier === 'summit' && a.id !== result.answerId)
     .slice(0, RARE_COUNT);
+
+  // Answers the player typed that are not on the list: they can suggest them to editors.
+  const unknowns = [
+    ...new Map(
+      round.attempts.filter((a) => a.kind === 'unknown').map((a) => [a.key, a.input]),
+    ).values(),
+  ];
 
   const after = altitude(totalPoints(state.rounds.slice(0, state.current + 1)));
   const before = altitude(totalPoints(state.rounds.slice(0, state.current)));
@@ -93,6 +102,15 @@ export function Reveal({
         </h3>
         <p class="fact">{prompt.edelweissFact}</p>
       </section>
+
+      {API_ENABLED && unknowns.length > 0 && (
+        <section class="suggest">
+          <h3>{t.reveal.suggestTitle}</h3>
+          {unknowns.map((input) => (
+            <SuggestButton key={input} promptId={prompt.id} input={input} />
+          ))}
+        </section>
+      )}
 
       <div class="actions">
         {REPORT_URL && (

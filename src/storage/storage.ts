@@ -11,6 +11,8 @@ export const KEYS = {
   expedition: 'muncak:v1:expedition',
   packs: 'muncak:v1:packs',
   groups: 'muncak:v1:groups',
+  /** A finished daily play not yet accepted by the server (offline, server down). */
+  pendingPlay: 'muncak:v1:pending-play',
   daily: (date: string) => `muncak:v1:daily:${date}`,
 } as const;
 const DAILY_PREFIX = 'muncak:v1:daily:';

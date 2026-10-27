@@ -66,6 +66,30 @@ const HIKER_TOP_COLD: Sprite = [
   '......KLLLLLK...',
 ];
 
+/** Holding a camera in front of the face (foto edelweiss). */
+const HIKER_TOP_PHOTO: Sprite = [
+  '................',
+  '..KKKK..........',
+  '.KRRRRK..KKKK...',
+  '.KRDDRK.KHHHHK..',
+  '.KRRRRKKHHHHHHK.',
+  '.KRDDRK.KKBBKKKK',
+  '.KRRRRK..KBKAAAK',
+  '.KRDDRK..KBKAKAK',
+  '.KRRRRK...KKAAAK',
+  '.KRDDRKKKKSSKKKK',
+  '.KRRRRKSSSSSSBK.',
+  '.KRDDRKSSSSSSBK.',
+  '.KRRRRKSSSSSSK..',
+  '.KDDDDKSSSSSSK..',
+  '..KKKKKSSSSSK...',
+  '......KLLLLLK...',
+];
+
+const HIKER_TOP_PHOTO_FLASH: Sprite = HIKER_TOP_PHOTO.map((row, y) =>
+  y === 5 ? row.slice(0, 14) + 'WW' : y === 6 ? row.slice(0, 15) + 'W' : row,
+);
+
 const LEGS_STAND: Sprite = [
   '......KLLLLLK...',
   '......KLLKLLK...',
@@ -113,7 +137,7 @@ const LEGS_TUCK: Sprite = [
 export const HIKER_W = 16;
 export const HIKER_H = 24;
 
-export type HikerAnim = 'idle' | 'walk' | 'jump' | 'cold';
+export type HikerAnim = 'idle' | 'walk' | 'jump' | 'cold' | 'photo' | 'wave';
 
 /** Frame count and speed per animation (docs/04-art-ui.md §5.1). */
 export const HIKER_ANIMS: Record<HikerAnim, { frames: number; fps: number }> = {
@@ -121,6 +145,8 @@ export const HIKER_ANIMS: Record<HikerAnim, { frames: number; fps: number }> = {
   walk: { frames: 6, fps: 10 },
   jump: { frames: 4, fps: 8 },
   cold: { frames: 3, fps: 6 },
+  photo: { frames: 6, fps: 8 },
+  wave: { frames: 4, fps: 6 },
 };
 
 function shift(sprite: Sprite, dx: number, dy: number): Sprite {
@@ -155,6 +181,12 @@ export function hikerFrame(anim: HikerAnim, frame: number): Sprite {
       return [...HIKER_TOP_CHEER, ...(f === 0 ? LEGS_STAND : LEGS_TUCK)];
     case 'cold':
       return shift([...HIKER_TOP_COLD, ...LEGS_STAND], [0, 1, -1][f]!, 0);
+    case 'photo':
+      // Camera up to the face; frame 3 is the flash.
+      return [...(f === 3 ? HIKER_TOP_PHOTO_FLASH : HIKER_TOP_PHOTO), ...LEGS_STAND];
+    case 'wave':
+      // Arm raised holding the pole; the flag cloth is drawn by the scene (FLAG_WAVE).
+      return [...HIKER_TOP_CHEER, ...LEGS_STAND];
   }
 }
 
@@ -353,6 +385,87 @@ export const FLAG: Sprite = [
   'KAK.........',
   'KAK.........',
 ];
+
+/** Red-and-white flag waving on a pole held up by the hiker (kibar bendera), 4 frames. */
+export const FLAG_WAVE: readonly Sprite[] = [
+  ['KKKKKKKKK..', 'KRRRRRRRRK.', 'KRRRRRRRRK.', 'KWWWWWWWWK.', 'KWWWWWWWWK.', 'KKKKKKKKK..'],
+  ['KKKKKKKK...', 'KRRRRRRRKK.', 'KRRRRRRRRRK', 'KWWWWWWWWWK', 'KWWWWWWWKK.', 'KKKKKKKK...'],
+  ['KKKKKKK.KK.', 'KRRRRRRKRRK', 'KRRRRRRRRRK', 'KWWWWWWWWWK', 'KWWWWWWKWWK', 'KKKKKKK.KK.'],
+  ['KKKKKKKKKK.', 'KRRRRRRRRK.', 'KRRRRRRRRRK', 'KWWWWWWWWWK', 'KWWWWWWWWK.', 'KKKKKKKKKK.'],
+];
+
+/** Low shrubs above the forest line (zona semak). */
+export const SHRUB: Sprite = [
+  '...KKK....',
+  '..KGGGKKK.',
+  '.KGMGGGGGK',
+  'KGGGGHGGGK',
+  'KHGGGGGHGK',
+  '.KKKKKKKK.',
+];
+
+/** Cantigi: small twisted tree near the summit zone. */
+export const CANTIGI: Sprite = [
+  '..KKK...',
+  '.KHHHKK.',
+  'KHGHHHHK',
+  '.KKHKKK.',
+  '...TK...',
+  '..KT....',
+  '..KT....',
+];
+
+/** Snow patch on high rock. */
+export const SNOW: Sprite = ['..WWWW..', '.WWWWWWW', 'WWFFWWFW'];
+
+const cards = new Map<string, Sprite>();
+
+/** 48×32 collection card for a mountain (docs/04-art-ui.md §5.3). Same array for the same id. */
+export function mountainCard(id: string, altitude: number): Sprite {
+  const key = `${id}:${altitude}`;
+  let card = cards.get(key);
+  if (!card) {
+    card = drawMountainCard(id, altitude);
+    cards.set(key, card);
+  }
+  return card;
+}
+
+function drawMountainCard(id: string, altitude: number): Sprite {
+  const W = 48;
+  const H = 32;
+  let seed = 0;
+  for (const ch of id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+  const rand = (n: number) => {
+    let x = Math.imul((seed ^ n) >>> 0, 0x9e3779b1);
+    x ^= x >>> 15;
+    return ((x >>> 0) % 1000) / 1000;
+  };
+  // Taller cards for higher mountains; a lumpy profile seeded by the id.
+  const peakH = 8 + Math.round(Math.min(1, altitude / 4884) * 16);
+  const peakX = 14 + Math.floor(rand(1) * 20);
+  const rows: string[][] = Array.from({ length: H }, (_, y) =>
+    Array.from({ length: W }, () => (y < 18 ? 'F' : 'Y')),
+  );
+  const ground = H - 4;
+  for (let x = 1; x < W - 1; x++) {
+    const d = Math.abs(x - peakX);
+    const lump = Math.round(rand(x) * 2);
+    const h = Math.max(0, peakH - Math.round(d * (0.7 + rand(7) * 0.4)) - lump);
+    for (let y = ground - h; y < ground; y++) {
+      const snow =
+        altitude >= 3000 && y < ground - h + Math.max(1, Math.round(h * 0.25)) && h > peakH * 0.6;
+      rows[y]![x] = snow ? 'W' : x > peakX ? 'L' : 'S';
+    }
+  }
+  for (let y = ground; y < H; y++)
+    for (let x = 0; x < W; x++) rows[y]![x] = y === ground ? 'G' : 'H';
+  // Sun and frame.
+  rows[4]![40] = rows[4]![41] = rows[5]![40] = rows[5]![41] = 'E';
+  for (let x = 0; x < W; x++) rows[0]![x] = rows[H - 1]![x] = 'K';
+  for (let y = 0; y < H; y++) rows[y]![0] = rows[y]![W - 1] = 'K';
+  return rows.map((r) => r.join(''));
+}
 
 export const CLOUD: Sprite = [
   '.......WWWW.............',

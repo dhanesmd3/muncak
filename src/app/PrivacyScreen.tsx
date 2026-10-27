@@ -1,8 +1,9 @@
+import { API_ENABLED } from '../api/client';
 import { CONTACT_EMAIL, PRIVACY_UPDATED } from '../config';
 import { t } from '../i18n/id';
 import { ScreenHeader } from './ScreenHeader';
 
-/** Phase 1 privacy policy, adapted from the draft in docs/07-privasi.md §5. */
+/** Privacy policy from docs/07-privasi.md §5; the phase 1 version while there is no backend. */
 export function PrivacyScreen({ onBack }: { onBack: () => void }) {
   const p = t.privacy;
   return (
@@ -10,7 +11,7 @@ export function PrivacyScreen({ onBack }: { onBack: () => void }) {
       <ScreenHeader title={p.title} onBack={onBack} />
       <p class="note">{p.updated(PRIVACY_UPDATED)}</p>
       <p>{p.intro}</p>
-      {p.sections.map((s) => (
+      {(API_ENABLED ? p.sectionsWithServer : p.sections).map((s) => (
         <section key={s.heading}>
           <h3>{s.heading}</h3>
           <p>{s.body}</p>

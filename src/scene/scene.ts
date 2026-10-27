@@ -3,14 +3,18 @@
 import type { Mountain } from '../game/types';
 import { PALETTE, PIXEL_KEY } from './palette';
 import {
+  CANTIGI,
   CLOUD,
   FLAG,
+  FLAG_WAVE,
   HIKER_ANIMS,
   HIKER_H,
   PINE,
   PINE_FAR,
   ROCK,
+  SHRUB,
   SIGN,
+  SNOW,
   TENT,
   TIER_ICONS,
   hikerFrame,
@@ -31,7 +35,17 @@ const MAX_ALTITUDE = 4900;
 const FRAME_MS = 1000 / 30;
 const FOG_LEVELS = 8;
 
-export type RestPose = 'idle' | 'jump' | 'cold';
+/** idle · jump (Puncak) · photo (Edelweiss) · cold (Kabut) · wave (flag at Cartenz). */
+export type RestPose = 'idle' | 'jump' | 'cold' | 'photo' | 'wave';
+
+/** Vegetation zone at an altitude (docs/04-art-ui.md §5.2: hutan → semak → batu → puncak). */
+export type Zone = 'forest' | 'shrub' | 'rock' | 'peak';
+export function zoneAt(altitude: number): Zone {
+  if (altitude < 2000) return 'forest';
+  if (altitude < 3000) return 'shrub';
+  if (altitude < 4000) return 'rock';
+  return 'peak';
+}
 
 export interface SceneState {
   altitude: number;
@@ -209,8 +223,16 @@ export class Scene {
     const frame = still ? 0 : Math.floor(((now - this.poseSince) / 1000) * meta.fps) % meta.frames;
     const hy = HIKER_FOOT_Y - HIKER_H + 1 - hikerLift(anim, frame);
     this.blit(this.hiker(anim, frame), HIKER_X - 9, hy);
+    if (anim === 'wave') {
+      // Pole from the raised hand, flag cloth waving at the top.
+      this.ctx.fillStyle = PALETTE.abu;
+      this.ctx.fillRect(HIKER_X + 5, hy - 12, 1, 13);
+      this.blit(FLAG_WAVE[frame % FLAG_WAVE.length]!, HIKER_X + 6, hy - 12);
+    }
 
-    if (st.flag && !this.tween) this.blit(FLAG, HIKER_X + 10, groundY(HIKER_X + 11) - 16);
+    if (st.flag && !this.tween && anim !== 'wave') {
+      this.blit(FLAG, HIKER_X + 10, groundY(HIKER_X + 11) - 16);
+    }
     if (st.edelweiss && !this.tween) this.drawEdelweiss(now, still);
     this.drawForeground(s);
     if (st.fog) {
@@ -278,13 +300,26 @@ export class Scene {
 
   private drawGround(s: number): void {
     const ctx = this.ctx;
-    // Pines behind the trail.
+    // Vegetation behind the trail changes with the altitude at that spot.
     for (let cell = Math.floor((s - HIKER_X) / 10) - 2; cell < (s + SCENE_W) / 10 + 2; cell++) {
       const r = hash(cell);
-      if (r > 0.45) continue;
+      const zone = zoneAt((cell * 10) / PX_PER_M);
+      const density =
+        zone === 'forest' ? 0.45 : zone === 'shrub' ? 0.5 : zone === 'rock' ? 0.3 : 0.35;
+      if (r > density) continue;
       const sx = cell * 10 - s + HIKER_X + hash(cell + 999) * 5;
       if (Math.abs(sx + 4 - HIKER_X) < 10) continue; // keep the hiker visible
-      this.blit(PINE, sx, groundY(sx + 4) - 14 - Math.round(r * 10));
+      const pick = hash(cell + 77);
+      const y = groundY(sx + 4);
+      if (zone === 'forest' || (zone === 'shrub' && pick < 0.3)) {
+        this.blit(PINE, sx, y - 14 - Math.round(r * 10));
+      } else if (zone === 'shrub') {
+        this.blit(SHRUB, sx, y - 6 - Math.round(r * 6));
+      } else if (zone === 'rock') {
+        this.blit(pick < 0.5 ? CANTIGI : ROCK, sx, y - 7 - Math.round(r * 8));
+      } else {
+        this.blit(pick < 0.5 ? SNOW : ROCK, sx, y - 4 - Math.round(r * 8));
+      }
     }
     // Basecamp tent, and one post (papan pos) per checkpoint mountain.
     const tentX = -46 - s + HIKER_X;
@@ -299,15 +334,23 @@ export class Scene {
     for (let x = 0; x < SCENE_W; x++) {
       const gy = Math.round(groundY(x));
       if (gy >= SCENE_H) continue;
-      ctx.fillStyle = PALETTE.lumut;
+      // Ground colors follow the zone: grass, then bare rock, then snow near the top.
+      const wx = Math.floor(x + s);
+      const zone = zoneAt((x - HIKER_X + s) / PX_PER_M);
+      const [edge, fill, texture] =
+        zone === 'forest' || zone === 'shrub'
+          ? [PALETTE.lumut, PALETTE.daun, PALETTE.hutan]
+          : zone === 'rock'
+            ? [PALETTE.batu, PALETTE.batu, PALETTE.tanah]
+            : [PALETTE.awan, PALETTE.abu, PALETTE.awan];
+      ctx.fillStyle = edge;
       ctx.fillRect(x, gy - 1, 1, 1);
       ctx.fillStyle = PALETTE.tanah;
       ctx.fillRect(x, gy, 1, 3);
-      ctx.fillStyle = PALETTE.daun;
+      ctx.fillStyle = fill;
       ctx.fillRect(x, gy + 3, 1, SCENE_H - gy - 3);
-      // Grass texture, anchored to the world so it scrolls with the trail.
-      const wx = Math.floor(x + s);
-      ctx.fillStyle = PALETTE.hutan;
+      // Texture anchored to the world so it scrolls with the trail.
+      ctx.fillStyle = texture;
       for (let y = gy + 5; y < SCENE_H; y += 4) {
         if (hash(wx * 131 + y) < 0.12) ctx.fillRect(x, y, 1, 2);
       }
@@ -345,8 +388,8 @@ export class Scene {
 }
 
 function restAnim(pose: RestPose, sincePose: number): HikerAnim {
-  if (pose === 'cold') return 'cold';
-  if (pose === 'jump' && sincePose < 1500) return 'jump';
+  if (pose === 'cold' || pose === 'wave') return pose;
+  if ((pose === 'jump' || pose === 'photo') && sincePose < 1500) return pose;
   return 'idle';
 }
 

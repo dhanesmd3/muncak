@@ -57,6 +57,9 @@ export const t = {
     seeResult: 'Lihat hasil',
     alreadyPlayed: 'Kamu sudah muncak hari ini. Sampai jumpa besok pagi!',
     streak: (n: number) => `🔥 Streak ${n} hari`,
+    expedition: 'Ekspedisi',
+    packs: 'Paket',
+    groups: 'Rombongan',
     stats: 'Statistik',
     settings: 'Pengaturan',
     help: 'Cara Main',
@@ -111,6 +114,10 @@ export const t = {
     next: 'Lanjut',
     finish: 'Lihat hasil',
     report: 'Laporkan soal',
+    suggestTitle: 'Yakin jawabanmu benar?',
+    suggest: (input: string) => `Usulkan "${input}"`,
+    suggested: 'Terkirim, makasih! Editor akan meninjaunya.',
+    suggestFailed: 'Gagal mengirim usulan. Coba lagi nanti.',
     fogTitle: 'Kabut turun! 🌫️',
   },
 
@@ -121,9 +128,88 @@ export const t = {
     copyFailed: 'Gagal menyalin. Coba salin manual, ya.',
     stats: 'Statistik',
     home: 'Beranda',
+    groups: 'Rombongan',
     nextIn: (time: string) => `Soal baru dalam ${time}`,
     newReady: 'Soal baru sudah siap!',
     shareTitle: (day: number) => `Muncak #${day} 🏔️`,
+  },
+
+  expedition: {
+    title: 'Ekspedisi',
+    intro:
+      'Main tanpa batas dengan satu persediaan logistik 45 detik. Jawaban diterima menambah logistik, makin langka makin banyak. Jawaban salah −2 detik, lewati soal −3 detik.',
+    bonusTable: 'Tambahan logistik',
+    start: 'Mulai ekspedisi',
+    again: 'Ekspedisi lagi',
+    record: (mdpl: string) => `Rekor kamu: ${mdpl}`,
+    noRecord: 'Belum ada rekor. Ayo berangkat!',
+    logistics: 'Logistik',
+    skip: 'Lewati (−3 dtk)',
+    bonus: (s: number) => `+${s} dtk`,
+    skipped: 'Soal dilewati.',
+    over: 'Logistik habis!',
+    newRecord: 'Rekor baru!',
+    timesCartenz: (ratio: number) => `${ratio.toFixed(1).replace('.', ',')}× Cartenz`,
+    answered: (n: number) => `${n} soal terjawab`,
+    empty: 'Belum ada soal Ekspedisi. Nanti dicek lagi, ya.',
+    loadError: 'Soal Ekspedisi gagal dimuat. Cek koneksi kamu.',
+  },
+
+  packs: {
+    title: 'Paket Tema',
+    intro:
+      '7 soal dengan aturan seperti Muncak Harian. Boleh diulang kapan saja, yang disimpan cuma skor terbaik.',
+    best: (mdpl: string) => `Terbaik: ${mdpl}`,
+    notPlayed: 'Belum dimainkan',
+    play: 'Main',
+    again: 'Main lagi',
+    backToPacks: 'Daftar paket',
+    empty: 'Belum ada Paket Tema. Nanti dicek lagi, ya.',
+    loadError: 'Paket gagal dimuat. Cek koneksi kamu.',
+    newBest: 'Skor terbaik baru!',
+  },
+
+  groups: {
+    title: 'Rombongan',
+    intro: 'Main bareng grup WA: satu link, klasemen harian dan mingguan.',
+    mine: 'Rombongan kamu',
+    none: 'Kamu belum ikut Rombongan.',
+    create: 'Bikin Rombongan',
+    groupName: 'Nama Rombongan',
+    groupNamePlaceholder: 'misal: Anak IF 2024',
+    nickname: 'Nama panggilan',
+    nicknameHint: 'Pakai nama panggilan, jangan nama lengkap.',
+    join: 'Gabung',
+    joinTitle: (name: string) => `Gabung ke "${name}"`,
+    joinByCode: 'Gabung pakai kode',
+    code: 'Kode Rombongan',
+    codePlaceholder: 'MCK-XXXX',
+    members: (n: number) => `${n} anggota`,
+    today: 'Hari ini',
+    week: 'Minggu ini',
+    notPlayed: '— belum main',
+    hiddenUntilPlayed: 'Skor teman terlihat setelah kamu menyelesaikan Muncak Harian hari ini.',
+    you: 'Kamu',
+    edelweissToday: (names: string) => `🌼 Edelweiss hari ini: ${names}`,
+    shareLink: 'Bagikan link grup',
+    shareText: (name: string, url: string) => `Gabung Rombongan "${name}" di Muncak 🏔️
+${url}`,
+    linkCopied: 'Link disalin!',
+    leave: 'Keluar dari Rombongan',
+    leaveConfirm: (name: string) => `Keluar dari "${name}"?`,
+    loading: 'Memuat Rombongan…',
+    pendingScore: 'Skor kamu sedang dikirim…',
+    offline: 'Rombongan butuh koneksi internet.',
+    errors: {
+      invalid_name: 'Nama harus 1–20 karakter.',
+      bad_name: 'Pilih nama lain yang lebih sopan, ya.',
+      group_full: 'Rombongan ini sudah penuh (maksimal 50 anggota).',
+      too_many_groups: 'Kamu sudah ikut 10 Rombongan, itu batasnya.',
+      group_not_found: 'Rombongan tidak ditemukan. Cek lagi kodenya.',
+      rate_limited: 'Terlalu sering. Coba lagi besok, ya.',
+      bad_code: 'Kodenya tidak valid. Contoh: MCK-7K3Q.',
+      generic: 'Ada masalah. Coba lagi sebentar.',
+    } as Record<string, string>,
   },
 
   stats: {
@@ -155,6 +241,7 @@ export const t = {
     deleteConfirm:
       'Hapus semua progres, statistik, dan pengaturan di perangkat ini? Ini tidak bisa dibatalkan.',
     deleted: 'Data kamu sudah dihapus.',
+    deleteFailed: 'Gagal menghapus data di server. Coba lagi saat online.',
   },
 
   about: {
@@ -196,6 +283,37 @@ export const t = {
       {
         heading: 'Untuk pemain di bawah 18 tahun',
         body: 'Muncak tidak meminta data pribadi. Orang tua/wali yang punya pertanyaan bisa menghubungi kami.',
+      },
+    ],
+    /** Used once the backend is on (docs/07-privasi.md §5). */
+    sectionsWithServer: [
+      {
+        heading: 'Yang disimpan di HP kamu',
+        body: 'Progres permainan, statistik, dan pengaturan disimpan di browser kamu sendiri. Kami tidak bisa melihatnya. Kamu bisa menghapusnya kapan saja lewat Pengaturan → Hapus data saya.',
+      },
+      {
+        heading: 'Yang kami terima',
+        body: 'Jawaban yang kamu ketik, beserta soal dan tanggalnya. Kami pakai untuk menghitung seberapa langka tiap jawaban dan untuk memperbaiki daftar jawaban. Data ini anonim: setelah 2 hari kami tidak bisa lagi tahu jawaban itu berasal dari perangkat mana. Kalau kamu ikut Rombongan: nama panggilan yang kamu pilih dan skor harianmu, supaya teman satu Rombonganmu bisa melihat klasemen. Pakai nama panggilan, jangan nama lengkap. Juga laporan error tanpa identitas untuk memperbaiki bug, dan statistik kunjungan tanpa cookie dan tanpa identitas melalui Cloudflare Web Analytics.',
+      },
+      {
+        heading: 'Yang tidak pernah kami kumpulkan',
+        body: 'Nama asli, email, nomor HP, lokasi, kontak, atau data untuk iklan. Muncak tidak memasang iklan dan tidak menjual data.',
+      },
+      {
+        heading: 'Berapa lama disimpan',
+        body: 'Data Rombongan dihapus kalau tidak aktif 90 hari (Rombongan) atau 12 bulan (pemain). Log jawaban anonim disimpan maksimal 24 bulan, lalu hanya tersisa dalam bentuk angka statistik.',
+      },
+      {
+        heading: 'Menghapus data',
+        body: 'Pengaturan → Hapus data saya akan menghapus data di HP kamu dan data Rombongan kamu di server kami. Jawaban yang sudah anonim tidak bisa dihapus per orang karena memang sudah tidak terhubung ke kamu.',
+      },
+      {
+        heading: 'Pihak lain',
+        body: 'Muncak di-host di Cloudflare. Cloudflare memproses alamat IP untuk mengirim halaman ke perangkatmu, sesuai kebijakan privasi Cloudflare.',
+      },
+      {
+        heading: 'Untuk pemain di bawah 18 tahun',
+        body: 'Muncak tidak meminta data pribadi. Kalau kamu ikut Rombongan, pakai nama panggilan saja. Orang tua/wali yang ingin data anaknya dihapus bisa menghubungi kami.',
       },
     ],
     contact: 'Kontak',

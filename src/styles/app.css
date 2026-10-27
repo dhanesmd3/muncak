@@ -282,6 +282,18 @@ p {
   color: var(--text-muted);
 }
 
+/* Abu on Lembah is only 4.2:1, so muted text on panels uses Kabut (5.4:1). */
+.panel .note,
+.btn .note,
+.stat-grid .note {
+  color: var(--kabut);
+}
+
+:root[data-contrast='high'] .panel .note,
+:root[data-contrast='high'] .btn .note {
+  color: #fff;
+}
+
 /* ── Home ───────────────────────────────────────────────── */
 
 .home {
@@ -790,8 +802,12 @@ p {
   margin: 8px 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
+}
+
+.album-card-art {
+  margin: 0 auto;
 }
 
 .album-card {
@@ -878,6 +894,189 @@ p {
 .settings .btn-wide,
 .about .btn-wide {
   margin-top: 8px;
+}
+
+/* ── Home modes ─────────────────────────────────────────── */
+
+.home-modes {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.home-modes .btn {
+  padding: 8px;
+  white-space: nowrap;
+}
+
+.home-modes .btn-span {
+  grid-column: span 2;
+}
+
+/* ── Forms ──────────────────────────────────────────────── */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.form h3 {
+  margin: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field .note {
+  margin: 0;
+  font-size: 15px;
+}
+
+.text-input {
+  min-height: var(--tap);
+  padding: 8px 12px;
+  font-size: 18px; /* ≥ 16px, or iOS zooms in */
+  background: var(--awan);
+  color: var(--malam);
+  border: 2px solid var(--kabut);
+  border-radius: 0;
+}
+
+.form-error {
+  color: var(--mentari);
+  font-weight: 700;
+}
+
+:root[data-contrast='high'] .form-error {
+  color: #fff;
+}
+
+/* ── Rombongan ──────────────────────────────────────────── */
+
+.group-list,
+.standings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.group-item {
+  justify-content: space-between;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab {
+  flex: 1;
+  min-height: var(--tap);
+  background: var(--bg);
+  border: 2px solid var(--border);
+  cursor: pointer;
+}
+
+.tab-active {
+  background: var(--panel);
+  border-color: var(--kabut);
+  font-weight: 700;
+}
+
+:root[data-contrast='high'] .tab-active {
+  background: #fff;
+  color: #000;
+}
+
+.standings li {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 8px;
+  align-items: baseline;
+  padding: 8px;
+  background: var(--panel);
+  border: 2px solid var(--border);
+}
+
+.standings li.me {
+  border-color: var(--senja);
+}
+
+.standings .nick {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.standings .score {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Paket Tema ─────────────────────────────────────────── */
+
+.pack-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.pack-card {
+  width: 100%;
+  min-height: var(--tap);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  text-align: left;
+  background: var(--panel);
+  border: 2px solid var(--border);
+  cursor: pointer;
+}
+
+.pack-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--edelweiss);
+}
+
+:root[data-contrast='high'] .pack-title {
+  color: #fff;
+}
+
+.pack-best {
+  color: var(--mentari);
+}
+
+:root[data-contrast='high'] .pack-best {
+  color: #fff;
+}
+
+/* ── Reveal: suggestions ───────────────────────────────── */
+
+.suggest {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.btn-suggest {
+  border-color: var(--kabut);
+  text-align: left;
+  overflow-wrap: anywhere;
 }
 
 /* ── Motion ─────────────────────────────────────────────── */

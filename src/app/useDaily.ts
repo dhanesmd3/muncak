@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { DAILY_RETRY_MS } from '../game/constants';
-import { dailyPath, parseDailyFile } from '../game/daily';
-import { DEFAULT_PAYLOAD_KEY } from '../game/payload';
+import { API_ENABLED, api } from '../api/client';
+import { dailyPath, isDailyPayload, parseDailyFile } from '../game/daily';
+import { DEFAULT_PAYLOAD_KEY, decodePayload } from '../game/payload';
 import type { DailyPayload } from '../game/types';
 
 export type DailyLoad =
@@ -12,7 +13,20 @@ export type DailyLoad =
 
 const KEY = import.meta.env.VITE_PAYLOAD_KEY || DEFAULT_PAYLOAD_KEY;
 
+/** Phase 2: the Worker decides which day it is and never serves tomorrow. */
+async function fetchFromApi(): Promise<DailyLoad> {
+  try {
+    const text = await api.daily();
+    if (text === null) return { status: 'missing' };
+    const payload = decodePayload(text, KEY);
+    return isDailyPayload(payload) ? { status: 'ready', payload } : { status: 'error' };
+  } catch {
+    return { status: 'error' };
+  }
+}
+
 async function fetchDaily(date: string): Promise<DailyLoad> {
+  if (API_ENABLED) return fetchFromApi();
   try {
     const res = await fetch(`${import.meta.env.BASE_URL}${dailyPath(date)}`, {
       cache: 'no-cache',

@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { trackEvent } from '../api/client';
 import { TierIcon } from '../components/PixelIcon';
 import { formatCountdown, msUntilNextReset, todayWIB } from '../game/date';
 import { altitude, outcomes, reachedMountain, titleFor, totalPoints } from '../game/scoring';
@@ -13,9 +14,11 @@ interface Props {
   mountains: readonly Mountain[];
   onStats: () => void;
   onHome: () => void;
+  /** Shown when the backend (Rombongan) is available. */
+  onGroups?: () => void;
 }
 
-export function Result({ session, mountains, onStats, onHome }: Props) {
+export function Result({ session, mountains, onStats, onHome, onGroups }: Props) {
   const { state } = session;
   const alt = altitude(totalPoints(state.rounds));
   const mountain = reachedMountain(alt, mountains);
@@ -39,6 +42,7 @@ export function Result({ session, mountains, onStats, onHome }: Props) {
   };
 
   const onShare = async () => {
+    trackEvent('share_pressed');
     const res = await shareResult(text);
     if (res === 'copied') flash(t.result.copied);
     if (res === 'failed') flash(t.result.copyFailed);
@@ -64,6 +68,11 @@ export function Result({ session, mountains, onStats, onHome }: Props) {
           <button class="btn" onClick={onCopy}>
             {t.result.copy}
           </button>
+          {onGroups && (
+            <button class="btn" onClick={onGroups}>
+              {t.result.groups}
+            </button>
+          )}
           <button class="btn" onClick={onStats}>
             {t.result.stats}
           </button>

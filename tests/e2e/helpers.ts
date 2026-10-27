@@ -10,8 +10,46 @@ export const MORNING = new Date('2026-12-01T03:00:00Z');
 
 const fixture = JSON.parse(readFileSync('tests/fixtures/daily-prompts.json', 'utf8')) as Prompt[];
 
+export const fixturePrompts = (): Prompt[] => structuredClone(fixture);
+
+/** Bank copies of the fixture prompts (separate ids, pool "bank"). */
+export const bankPrompts = (): Prompt[] =>
+  fixturePrompts().map((p) => ({ ...p, id: `bank-${p.id}`, pool: 'bank' as const }));
+
+export const ALL_BASECAMP = ['merah', 'senin', 'bumi', 'pensil', 'kucing', 'pisang', 'gitar'];
+
 export function fixturePayload(date = DAY, dayNumber = 1): DailyPayload {
   return { date, dayNumber, prompts: fixture };
+}
+
+/** Serve fixture Ekspedisi bank and one fixture pack. */
+export async function mockBank(page: Page, opts: { empty?: boolean } = {}): Promise<void> {
+  const bank = opts.empty ? [] : bankPrompts();
+  await page.route('**/bank/expedition.json', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: encodePayload({ prompts: bank }, E2E_PAYLOAD_KEY),
+    }),
+  );
+  const info = { id: 'contoh', title: 'Paket Contoh', description: 'Paket untuk test.' };
+  const merdeka = {
+    id: 'merdeka',
+    title: 'Paket 17 Agustus',
+    description: 'Musiman.',
+    season: { from: '08-01', to: '08-31' },
+  };
+  await page.route('**/packs/index.json', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify(opts.empty ? [] : [info, merdeka]),
+    }),
+  );
+  await page.route('**/packs/contoh.json', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: encodePayload({ ...info, prompts: bank }, E2E_PAYLOAD_KEY),
+    }),
+  );
 }
 
 /** Serve fixture payloads (never real content) for /daily/<date>.json. */
