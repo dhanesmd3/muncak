@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { PALETTE, PIXEL_KEY } from '../../src/scene/palette';
+import { THEMES } from '../../src/scene/themes';
 import {
   CLOUD,
   FLAG,
@@ -108,5 +109,33 @@ describe('text contrast ≥ 4.5:1 for the pairs used in app.css', () => {
     expect(contrast(P.carrier, P.malam)).toBeLessThan(4.5);
     const css = readFileSync('src/styles/app.css', 'utf8');
     expect(css).not.toMatch(/(^|[^-])color:\s*var\(--(langit|carrier|tier-summit)\)/m);
+  });
+});
+
+describe('time-of-day themes', () => {
+  it('use only "Kabut Pagi" colors', () => {
+    const palette = new Set<string>(Object.values(PALETTE));
+    for (const [name, theme] of Object.entries(THEMES)) {
+      const colors = [
+        ...theme.sky.flatMap(([, a, b]) => [a, b]),
+        theme.light.outer,
+        theme.light.inner,
+        theme.ridgeBack,
+        theme.ridgeFront,
+        theme.snow,
+        theme.fogBand,
+        ...Object.keys(theme.recolor),
+        ...Object.values(theme.recolor),
+      ];
+      for (const c of colors) expect(palette.has(c), `${name}: ${c}`).toBe(true);
+    }
+  });
+
+  it('sky bands start at the top and go down', () => {
+    for (const theme of Object.values(THEMES)) {
+      expect(theme.sky[0]![0]).toBe(0);
+      const ys = theme.sky.map(([y]) => y);
+      expect([...ys].sort((a, b) => a - b)).toEqual(ys);
+    }
   });
 });

@@ -1,5 +1,6 @@
 // Pixel scene: 180×120 logical px, parallax layers, a hiker that climbs with the score.
 // docs/04-art-ui.md §2, §5, §7.
+import type { TimeOfDay } from '../game/date';
 import type { Mountain } from '../game/types';
 import { PALETTE, PIXEL_KEY } from './palette';
 import {
@@ -22,6 +23,7 @@ import {
   type HikerAnim,
   type Sprite,
 } from './sprites';
+import { THEMES, tint, type SceneTheme } from './themes';
 
 export const SCENE_W = 180;
 export const SCENE_H = 120;
@@ -54,6 +56,8 @@ export interface SceneState {
   edelweiss: boolean;
   flag: boolean;
   reducedMotion: boolean;
+  /** Sky and colors by WIB hour (docs/04-art-ui.md §5.2, layer 7). Default: morning. */
+  timeOfDay?: TimeOfDay;
 }
 
 /** Climb tween length: 800–1.500 ms, longer for bigger climbs (docs/04-art-ui.md §7). */
@@ -97,7 +101,8 @@ export class Scene {
   private raf = 0;
   private lastDraw = 0;
   private started = false;
-  private sprites = new Map<Sprite, HTMLCanvasElement>();
+  /** Sprite canvases per theme ('' = original colors, used for the hiker and effects). */
+  private sprites = new Map<string, Map<Sprite, HTMLCanvasElement>>();
   private layers = new Map<string, HTMLCanvasElement>();
   private hikerFrames = new Map<string, Sprite>();
 
@@ -160,9 +165,24 @@ export class Scene {
     return c;
   }
 
-  private sprite(s: Sprite): HTMLCanvasElement {
-    let c = this.sprites.get(s);
+  private get timeOfDay(): TimeOfDay {
+    return this.state.timeOfDay ?? 'morning';
+  }
+
+  private get theme(): SceneTheme {
+    return THEMES[this.timeOfDay];
+  }
+
+  private sprite(s: Sprite, themed: boolean): HTMLCanvasElement {
+    const key = themed ? this.timeOfDay : '';
+    let cache = this.sprites.get(key);
+    if (!cache) {
+      cache = new Map();
+      this.sprites.set(key, cache);
+    }
+    let c = cache.get(s);
     if (!c) {
+      const theme = this.theme;
       c = document.createElement('canvas');
       c.width = s[0]!.length;
       c.height = s.length;
@@ -171,17 +191,23 @@ export class Scene {
         for (let x = 0; x < row.length; x++) {
           const color = PIXEL_KEY[row[x]!];
           if (!color) continue;
-          ctx.fillStyle = color;
+          ctx.fillStyle = themed ? tint(theme, color) : color;
           ctx.fillRect(x, y, 1, 1);
         }
       });
-      this.sprites.set(s, c);
+      cache.set(s, c);
     }
     return c;
   }
 
+  /** Draw an environment sprite, recolored for the time of day. */
   private blit(s: Sprite, x: number, y: number): void {
-    this.ctx.drawImage(this.sprite(s), Math.round(x), Math.round(y));
+    this.ctx.drawImage(this.sprite(s, true), Math.round(x), Math.round(y));
+  }
+
+  /** Draw a sprite in its own colors (hiker, flag, Edelweiss stay readable at night). */
+  private blitPlain(s: Sprite, x: number, y: number): void {
+    this.ctx.drawImage(this.sprite(s, false), Math.round(x), Math.round(y));
   }
 
   private hiker(anim: HikerAnim, frame: number): Sprite {
@@ -211,7 +237,12 @@ export class Scene {
     const s = this.cam * PX_PER_M; // distance walked along the trail, in px
     const sink = Math.min(1, this.cam / MAX_ALTITUDE) * 40; // other ranges sit lower as we climb
 
-    this.ctx.drawImage(this.layer('sky', paintSky), 0, 0);
+    const theme = this.theme;
+    this.ctx.drawImage(
+      this.layer(`sky:${this.timeOfDay}`, (ctx) => paintSky(ctx, theme)),
+      0,
+      0,
+    );
     this.drawClouds(s, still ? 0 : now);
     this.drawFarMountains(s, sink);
     this.drawFogBand(s, sink, still ? 0 : now);
@@ -222,16 +253,16 @@ export class Scene {
     const meta = HIKER_ANIMS[anim];
     const frame = still ? 0 : Math.floor(((now - this.poseSince) / 1000) * meta.fps) % meta.frames;
     const hy = HIKER_FOOT_Y - HIKER_H + 1 - hikerLift(anim, frame);
-    this.blit(this.hiker(anim, frame), HIKER_X - 9, hy);
+    this.blitPlain(this.hiker(anim, frame), HIKER_X - 9, hy);
     if (anim === 'wave') {
       // Pole from the raised hand, flag cloth waving at the top.
       this.ctx.fillStyle = PALETTE.abu;
       this.ctx.fillRect(HIKER_X + 5, hy - 12, 1, 13);
-      this.blit(FLAG_WAVE[frame % FLAG_WAVE.length]!, HIKER_X + 6, hy - 12);
+      this.blitPlain(FLAG_WAVE[frame % FLAG_WAVE.length]!, HIKER_X + 6, hy - 12);
     }
 
     if (st.flag && !this.tween && anim !== 'wave') {
-      this.blit(FLAG, HIKER_X + 10, groundY(HIKER_X + 11) - 16);
+      this.blitPlain(FLAG, HIKER_X + 10, groundY(HIKER_X + 11) - 16);
     }
     if (st.edelweiss && !this.tween) this.drawEdelweiss(now, still);
     this.drawForeground(s);
@@ -260,20 +291,21 @@ export class Scene {
 
   private drawFarMountains(s: number, sink: number): void {
     const ctx = this.ctx;
+    const theme = this.theme;
     for (let x = 0; x < SCENE_W; x++) {
       const wx = x + s * 0.2;
       const back =
         24 + 9 * Math.sin(wx * 0.031) + 6 * Math.sin(wx * 0.083 + 1) + 2 * Math.sin(wx * 0.21);
       const yb = Math.round(80 + sink - back);
-      ctx.fillStyle = PALETTE.langit;
+      ctx.fillStyle = theme.ridgeBack;
       ctx.fillRect(x, yb, 1, SCENE_H - yb);
       if (back > 33) {
         // Snow on the highest crests.
-        ctx.fillStyle = PALETTE.awan;
+        ctx.fillStyle = theme.snow;
         ctx.fillRect(x, yb, 1, Math.min(3, Math.round(back - 33)));
       }
       const yf = Math.round(90 + sink - frontRidge(x + s * 0.3));
-      ctx.fillStyle = PALETTE.lembah;
+      ctx.fillStyle = theme.ridgeFront;
       ctx.fillRect(x, yf, 1, SCENE_H - yf);
     }
     // Distant pines along the front ridge.
@@ -287,7 +319,7 @@ export class Scene {
 
   private drawFogBand(s: number, sink: number, now: number): void {
     const ctx = this.ctx;
-    ctx.fillStyle = PALETTE.awan;
+    ctx.fillStyle = this.theme.fogBand;
     const off = s * 0.4 + now * 0.004;
     for (let x = 0; x < SCENE_W; x++) {
       const top = Math.round(78 + sink + 3 * Math.sin((x + off) * 0.06));
@@ -300,6 +332,7 @@ export class Scene {
 
   private drawGround(s: number): void {
     const ctx = this.ctx;
+    const theme = this.theme;
     // Vegetation behind the trail changes with the altitude at that spot.
     for (let cell = Math.floor((s - HIKER_X) / 10) - 2; cell < (s + SCENE_W) / 10 + 2; cell++) {
       const r = hash(cell);
@@ -343,14 +376,14 @@ export class Scene {
           : zone === 'rock'
             ? [PALETTE.batu, PALETTE.batu, PALETTE.tanah]
             : [PALETTE.awan, PALETTE.abu, PALETTE.awan];
-      ctx.fillStyle = edge;
+      ctx.fillStyle = tint(theme, edge);
       ctx.fillRect(x, gy - 1, 1, 1);
-      ctx.fillStyle = PALETTE.tanah;
+      ctx.fillStyle = tint(theme, PALETTE.tanah);
       ctx.fillRect(x, gy, 1, 3);
-      ctx.fillStyle = fill;
+      ctx.fillStyle = tint(theme, fill);
       ctx.fillRect(x, gy + 3, 1, SCENE_H - gy - 3);
       // Texture anchored to the world so it scrolls with the trail.
-      ctx.fillStyle = texture;
+      ctx.fillStyle = tint(theme, texture);
       for (let y = gy + 5; y < SCENE_H; y += 4) {
         if (hash(wx * 131 + y) < 0.12) ctx.fillRect(x, y, 1, 2);
       }
@@ -367,7 +400,7 @@ export class Scene {
 
   private drawEdelweiss(now: number, still: boolean): void {
     const ctx = this.ctx;
-    this.blit(TIER_ICONS.edelweiss, HIKER_X + 6, groundY(HIKER_X + 14) - 10);
+    this.blitPlain(TIER_ICONS.edelweiss, HIKER_X + 6, groundY(HIKER_X + 14) - 10);
     const t = now - this.edelweissSince;
     if (still || t > 1500) return;
     // Sparkles drifting around the hiker for 1.5 s.
@@ -400,15 +433,9 @@ function circle(ctx: Ctx, cx: number, cy: number, r: number): void {
   }
 }
 
-/** Morning sky: Langit → Kabut → Mentari, dithered between bands, plus the sun. */
-function paintSky(ctx: Ctx): void {
-  const bands: [number, string, string][] = [
-    [0, PALETTE.langit, PALETTE.langit],
-    [20, PALETTE.langit, PALETTE.kabut],
-    [28, PALETTE.kabut, PALETTE.kabut],
-    [56, PALETTE.kabut, PALETTE.mentari],
-    [64, PALETTE.mentari, PALETTE.mentari],
-  ];
+/** Sky for the time of day: dithered bands, sun or moon, and stars at night. */
+function paintSky(ctx: Ctx, theme: SceneTheme): void {
+  const bands = theme.sky;
   for (let y = 0; y < SCENE_H; y++) {
     let i = bands.length - 1;
     while (i > 0 && bands[i]![0] > y) i--;
@@ -425,10 +452,27 @@ function paintSky(ctx: Ctx): void {
       ctx.fillRect(x, y, 1, 1);
     }
   }
-  ctx.fillStyle = PALETTE.mentari;
-  circle(ctx, 142, 30, 9);
-  ctx.fillStyle = PALETTE.edelweiss;
-  circle(ctx, 142, 30, 7);
+  if (theme.stars) {
+    // Fixed star field in the upper sky, one or two pixels each.
+    for (let i = 0; i < 40; i++) {
+      const x = Math.floor(hash(i * 17 + 5) * SCENE_W);
+      const y = Math.floor(hash(i * 31 + 11) * 52);
+      ctx.fillStyle = hash(i * 7) < 0.25 ? PALETTE.edelweiss : PALETTE.awan;
+      ctx.fillRect(x, y, 1, 1);
+    }
+  }
+  const { x, y, outer, inner, moon } = theme.light;
+  ctx.fillStyle = outer;
+  circle(ctx, x, y, moon ? 7 : 9);
+  ctx.fillStyle = inner;
+  circle(ctx, x, y, moon ? 6 : 7);
+  if (moon) {
+    // Craters.
+    ctx.fillStyle = PALETTE.kabut;
+    ctx.fillRect(x - 2, y - 2, 2, 2);
+    ctx.fillRect(x + 2, y + 1, 2, 1);
+    ctx.fillRect(x - 1, y + 3, 1, 1);
+  }
 }
 
 /** Thick fog covering the scene (Kabut result), ordered-dithered to stay in the palette. */

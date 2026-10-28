@@ -37,7 +37,15 @@ export function SceneView({ state, mountains, showAltitude, compact }: Props) {
 
   useEffect(() => {
     scene.current?.set(state);
-  }, [state.altitude, state.pose, state.fog, state.edelweiss, state.flag, state.reducedMotion]);
+  }, [
+    state.altitude,
+    state.pose,
+    state.fog,
+    state.edelweiss,
+    state.flag,
+    state.reducedMotion,
+    state.timeOfDay,
+  ]);
 
   // Largest whole-number scale that fits the width (never 1.5×).
   useLayoutEffect(() => {

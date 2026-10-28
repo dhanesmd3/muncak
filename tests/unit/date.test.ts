@@ -6,6 +6,7 @@ import {
   formatCountdown,
   isValidDate,
   msUntilNextReset,
+  timeOfDayWIB,
   todayWIB,
 } from '../../src/game/date';
 
@@ -84,5 +85,37 @@ describe('calendar helpers', () => {
     expect(formatCountdown((6 * 3600 + 12 * 60 + 40) * 1000)).toBe('06:12:40');
     expect(formatCountdown(999)).toBe('00:00:00');
     expect(formatCountdown(-5)).toBe('00:00:00');
+  });
+});
+
+describe('timeOfDayWIB (scene palette, docs/04-art-ui.md §5.2)', () => {
+  // UTC = WIB − 7 h.
+  it.each([
+    ['2026-12-01T21:59:59Z', 'night'], // 04:59:59 WIB
+    ['2026-12-01T22:00:00Z', 'morning'], // 05:00 WIB
+    ['2026-12-02T02:59:59Z', 'morning'], // 09:59:59 WIB
+    ['2026-12-02T03:00:00Z', 'day'], // 10:00 WIB
+    ['2026-12-02T07:59:59Z', 'day'], // 14:59:59 WIB
+    ['2026-12-02T08:00:00Z', 'evening'], // 15:00 WIB
+    ['2026-12-02T10:59:59Z', 'evening'], // 17:59:59 WIB
+    ['2026-12-02T11:00:00Z', 'night'], // 18:00 WIB
+    ['2026-12-31T16:59:59Z', 'night'], // 23:59:59 WIB, year end
+    ['2026-12-31T17:00:00Z', 'night'], // 00:00 WIB, new year
+  ])('%s → %s', (iso, expected) => {
+    expect(timeOfDayWIB(new Date(iso))).toBe(expected);
+  });
+
+  it('ignores the device time zone', () => {
+    const original = process.env.TZ;
+    try {
+      process.env.TZ = 'America/New_York';
+      // 21:00 in New York (UTC−5) = 02:00 UTC = 09:00 WIB → morning, not night.
+      const nyEvening = new Date(2026, 11, 1, 21, 0, 0);
+      expect(nyEvening.toISOString()).toBe('2026-12-02T02:00:00.000Z');
+      expect(timeOfDayWIB(nyEvening)).toBe('morning');
+    } finally {
+      if (original === undefined) delete process.env.TZ;
+      else process.env.TZ = original;
+    }
   });
 });

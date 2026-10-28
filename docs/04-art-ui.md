@@ -116,6 +116,17 @@ Ciri khas pendaki: tas carrier merah (warna Carrier), topi rimba, sepatu cokelat
 | 6. Variasi zona | — | Hutan → semak → batu → puncak, berubah sesuai ketinggian | Fase 2 |
 | 7. Waktu | — | Palet pagi/siang/sore/malam sesuai jam WIB | Fase 3 |
 
+**Palet waktu (lapisan 7)** mengikuti jam WIB, apa pun zona waktu HP (`timeOfDayWIB()` di `src/game/date.ts`, tema di `src/scene/themes.ts`):
+
+| Waktu | Jam WIB | Langit |
+|---|---|---|
+| Pagi | 05.00–09.59 | Langit → Kabut → Mentari, matahari rendah (palet "Kabut Pagi" asli) |
+| Siang | 10.00–14.59 | Langit → Kabut, matahari tinggi |
+| Sore | 15.00–17.59 | Lembah → Langit → Senja → Mentari, matahari terbenam di barat |
+| Malam | 18.00–04.59 | Malam → Lembah → Langit di cakrawala, bulan dan bintang; tanah, pohon, dan awan digelapkan satu tingkat |
+
+Semua warnanya tetap dari 16 warna di §3. Pendaki, bendera, dan Edelweiss tidak ikut digelapkan supaya tetap jelas.
+
 ### 5.3 Objek & ikon
 
 | Aset | Ukuran | Prioritas |

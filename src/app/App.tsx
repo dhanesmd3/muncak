@@ -5,7 +5,7 @@ import { API_ENABLED, api, appNow, trackEvent } from '../api/client';
 import { flushPendingPlay, submitDailyPlay } from '../api/sync';
 import { setMusic, setSound, unlockAudio } from '../audio/sfx';
 import { SceneView } from '../components/SceneView';
-import { todayWIB } from '../game/date';
+import { timeOfDayWIB, todayWIB } from '../game/date';
 import { parseGroupCode, type MyGroup } from '../game/groups';
 import { playFromDaily } from '../game/play';
 import { altitude, outcomes, reachedMountain, totalPoints } from '../game/scoring';
@@ -21,7 +21,7 @@ import { AboutScreen } from './AboutScreen';
 import { ExpeditionScreen, type SceneRequest } from './ExpeditionScreen';
 import { GroupScreen, GroupsScreen } from './GroupsScreen';
 import { Home } from './Home';
-import { useKeyboardOpen, usePrefersReducedMotion } from './hooks';
+import { useKeyboardOpen, useNow, usePrefersReducedMotion } from './hooks';
 import { Onboarding } from './Onboarding';
 import { PacksScreen } from './PacksScreen';
 import { PrivacyScreen } from './PrivacyScreen';
@@ -189,6 +189,9 @@ function Screens({
 }: ScreensProps) {
   const session = useSession();
   const keyboardOpen = useKeyboardOpen();
+  // The scene palette follows the WIB hour (morning/day/evening/night), checked every minute.
+  useNow(60_000);
+  const timeOfDay = timeOfDayWIB(appNow());
   const [playAfterOnboarding, setPlayAfterOnboarding] = useState(false);
   const [privacyFrom, setPrivacyFrom] = useState<Screen>('settings');
   const [groups, setGroupsState] = useState<MyGroup[]>(loadGroups);
@@ -368,7 +371,7 @@ function Screens({
         </p>
       )}
       <SceneView
-        state={scene}
+        state={{ ...scene, timeOfDay }}
         mountains={MOUNTAINS}
         showAltitude={showAltitude}
         compact={compact}

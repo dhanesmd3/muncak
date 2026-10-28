@@ -28,6 +28,21 @@ export function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(to) - Date.parse(from)) / DAY_MS);
 }
 
+/** Part of the day for the scene palette (docs/04-art-ui.md §5.2, layer 7). */
+export type TimeOfDay = 'morning' | 'day' | 'evening' | 'night';
+
+/**
+ * Part of the day by WIB hour, whatever the device time zone:
+ * morning 05:00–09:59 · day 10:00–14:59 · evening 15:00–17:59 · night 18:00–04:59.
+ */
+export function timeOfDayWIB(now: Date = new Date()): TimeOfDay {
+  const hour = new Date(now.getTime() + WIB_OFFSET_MS).getUTCHours();
+  if (hour >= 5 && hour < 10) return 'morning';
+  if (hour >= 10 && hour < 15) return 'day';
+  if (hour >= 15 && hour < 18) return 'evening';
+  return 'night';
+}
+
 /** Monday of the (Monday–Sunday) week containing `date`. */
 export function mondayOf(date: string): string {
   const dow = new Date(Date.parse(date)).getUTCDay(); // 0 = Sunday
